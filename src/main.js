@@ -8,7 +8,7 @@ Time Tracked:
     - rotating player (60 min)
     - rotating smoothly (20 min)
     - made and added 1:53 background music track (80 min)
-    - added ship engine noise (20 min)
+    - added ship engine noise and collect sfx (20 min)
 */
 
 config = {
@@ -31,9 +31,12 @@ let game = new Phaser.Game(config);
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
 
-/*game where you are forced to move forward (like all runners) and you have to try to collide with some things and not with others (like all runners)
+/*
 
-controls are left right and jump (could add duck)
+cound add a jump or just up and down control
+
+animation with sprite sheet could be smoke trailing
+
 
 
 */

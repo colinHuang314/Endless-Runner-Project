@@ -75,16 +75,7 @@ class Player{
         tailRight.push(new Point(this.camera.x + 3, this.playerY, rightTip.z - 20))
 
         // combine parts
-        this.playerTris.push(playerTip)
-        this.playerTris.push(wingLeft01)
-        this.playerTris.push(wingRight01)
-        this.playerTris.push(wingLeft02)
-        this.playerTris.push(wingRight02)
-        this.playerTris.push(bodyLeft)
-        this.playerTris.push(bodyRight)
-        this.playerTris.push(bodyMiddle)
-        this.playerTris.push(tailLeft)
-        this.playerTris.push(tailRight)
+        this.playerTris.push(playerTip, wingLeft01, wingRight01, wingLeft02, wingRight02, bodyLeft, bodyRight, bodyMiddle, tailLeft, tailRight)
 
         // now rotate
         this.applyRotation()

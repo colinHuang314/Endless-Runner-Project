@@ -31,14 +31,16 @@ class Menu extends Phaser.Scene{
 
         this.graphics = this.add.graphics()
 
-        this.widthConstant = 2000
-        // acts like render distance too
-        this.minWidth = 0.4
-        //hides objects in face
-        this.maxWidth = 50
-        
         this.frame = 1
-        
+
+
+        // render
+        this.widthConstant = 2000
+        this.minWidth = 0.4  // acts like render distance too
+        this.maxWidth = 50   //makes close objects transparent
+
+            
+        // camera
         this.camera = new Camera(0, 0, -150, 140)
 
 
@@ -49,18 +51,22 @@ class Menu extends Phaser.Scene{
         this.playerLineAlpha = 1
         this.playerLineWidth = 2
         this.player = new Player(this.camera)
-
+    
+        this.playerSpeed = 2
         this.rotationConst = 0.1
         this.maxTurnAngle = 30
 
-        // rect prisms
-        this.cubeColor = 0xff47a6
-        this.cubeAlpha = 1
-        this.cube1 = this.makeRectangularPrism(-50, -50, 0, 100, 100, 100)
-        this.cube2 = this.makeRectangularPrism(-150, -50, 400, 100, 100, 100)
-        this.cube3 = this.makeRectangularPrism(-50, -50, 800, 100, 100, 100)
-        this.cube4 = this.makeRectangularPrism(-150, -50, 1200, 100, 100, 100)
+        // collectables
+        this.collectables = []
+        this.collectableColor = 0xff47a6
+        this.collectableAlpha = 1
+        this.cube1 = this.makeRectangularPrism(-50, -50, 0, 50, 50, 50)
+        this.cube2 = this.makeRectangularPrism(-150, -50, 400, 50, 50, 50)
+        this.cube3 = this.makeRectangularPrism(-50, -50, 800, 50, 50, 50)
+        this.cube4 = this.makeRectangularPrism(-150, -50, 1200, 50, 50, 50)
+        this.cube5 = this.makeRectangularPrism(-250, -50, 1600, 50, 50, 50)
 
+        this.collectables.push(this.cube1, this.cube2, this.cube3, this.cube4, this.cube5)
 
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
@@ -77,10 +83,6 @@ class Menu extends Phaser.Scene{
 
     update() {
         const startTime = performance.now()
-
-        // forward/backward control
-        if (keyUP.isDown) {this.camera.z += 2}
-        if (keyDOWN.isDown) {this.camera.z -= 2}
         
         // left/right control
         if (keyRIGHT.isDown) {
@@ -92,7 +94,6 @@ class Menu extends Phaser.Scene{
             this.camera.x -= 3
             this.rotatePlayer(this.maxTurnAngle)
             this.shipNoise.setVolume(3);
-
         }
         else{
             this.rotatePlayer(0)
@@ -100,16 +101,20 @@ class Menu extends Phaser.Scene{
         }
         
         // up/down control
-        if (keySPACE.isDown) {this.camera.y -= 1}
-        if (keySHIFT.isDown) {this.camera.y += 1}
+        if (keyUP.isDown) {this.camera.y -= 1}
+        if (keyDOWN.isDown) {this.camera.y += 1}
         
         // fov control
         if (keyIncreaseFov.isDown) {this.camera.fov += 1}
         if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
 
 
-        // quick and dirty
+        // refactor camera following player?
+        this.camera.z += this.playerSpeed
         this.player.updatePosition(this.camera)
+
+        // collision
+        this.checkCollision()
 
         this.graphics.clear()
 
@@ -118,20 +123,7 @@ class Menu extends Phaser.Scene{
         //     const shakeMagnitude = 4
         //     this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
         //     this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
-        // }
-
-        // quick check
-        const pc = this.player.playerCenter
-        if (this.cube1.length !== 0 && pc.x > -50 && pc.x < 50){
-            if (pc.y > 0 && pc.y < 100){
-                if (pc.z > 0 && pc.z < 100){
-                    this.collect1.play()
-                    console.log("hit first cube")
-                    this.cube1 = []
-                }
-            }
-
-        }
+        // }        
         
         this.draw()
 
@@ -148,9 +140,14 @@ class Menu extends Phaser.Scene{
     }
 
     draw() {
-        // lines
+        // draw lines
         let seen = new Set()
-        let queue = [...this.cube1, ...this.cube2, ...this.cube3, ...this.cube4]
+
+        let queue = []
+        for (const item of this.collectables){
+            // add all points of collectables
+            queue.push(...item)
+        }
 
 
         queue.sort((a, b) => b.z - a.z)
@@ -164,7 +161,7 @@ class Menu extends Phaser.Scene{
             
             for(const conn of point.connections){
                 if (!seen.has(conn)){
-                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.cubeColor, this.cubeAlpha)
+                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.collectableColor, this.collectableAlpha)
                 }
 
             }
@@ -172,18 +169,40 @@ class Menu extends Phaser.Scene{
             
         }
 
-        // player
+        // draw player
         this.drawPlayer()
         
     }
     
+    /*collision between player and collectables or obstacles */
+    // need to refactor
+    checkCollision(){
+        const pc = this.player.playerCenter
+
+        for (let i = 0; i < this.collectables.length; i++){
+            if(this.collectables[i].length === 0) continue
+
+            let [cx, cy, cz] = [this.collectables[i][2].x, this.collectables[i][2].y, this.collectables[i][2].z] // refactor
+            const size = 50 // need to refactor
+
+            // check z first for speed
+            if (pc.z > cz && pc.z < cz + size){
+                if (pc.y > cy && pc.y < cy + size){
+                    if (pc.x > cx && pc.x < cx + size){
+                            this.collect1.play() // audio
+                            this.collectables.splice(i, 1) // delete
+                    }
+                }
+            }
+        }
+    }
+
     /*
     z dist from camera is plane of view (for 53.13 deg fov)
 
     scale position in plane of view to screen (800 by 600)
         zdist = z - camera.z
         x -> (x - [camera.x - zdist/2]) / zdist * 800
-    
     */
     
     // coords mapped to camera
@@ -255,6 +274,7 @@ class Menu extends Phaser.Scene{
     }
 
 
+    /* returns all connected points of a rect prism in an array*/
     makeRectangularPrism(x, y, z, sizex, sizey, sizez){
         let frontFace = []
         frontFace.push(new Point(x+sizex, y+sizey, z))
