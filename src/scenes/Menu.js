@@ -2,18 +2,28 @@ class Menu extends Phaser.Scene{
     constructor(){
         super("menuScene")
     }
-    preload(){        
+    preload(){    
+        //audio    
         this.load.audio('music', './assets/bg-music.mp3')
         this.load.audio('shipNoise', './assets/shipNoise.wav')
+        this.load.audio('collect1', './assets/collectSound1.wav')
+        this.load.audio('collect2', './assets/collectSound2.wav')
     }
     
     create(){
+        // audio
         this.music = this.sound.add('music', { 
             volume: 0.7,
             loop: true 
         })
         this.shipNoise = this.sound.add('shipNoise', {
             volume: 1.5
+        })
+        this.collect1 = this.sound.add('collect1', {
+            volume: 1
+        })
+        this.collect1 = this.sound.add('collect1', {
+            volume: 1
         })
         
         this.music.play()
@@ -112,9 +122,10 @@ class Menu extends Phaser.Scene{
 
         // quick check
         const pc = this.player.playerCenter
-        if (pc.x > -50 && pc.x < 50){
+        if (this.cube1.length !== 0 && pc.x > -50 && pc.x < 50){
             if (pc.y > 0 && pc.y < 100){
                 if (pc.z > 0 && pc.z < 100){
+                    this.collect1.play()
                     console.log("hit first cube")
                     this.cube1 = []
                 }
