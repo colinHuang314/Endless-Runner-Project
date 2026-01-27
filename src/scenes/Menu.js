@@ -3,10 +3,13 @@ class Menu extends Phaser.Scene{
         super("menuScene")
     }
     preload(){        
-
+        this.load.audio('music', './assets/bg-music.mp3')
     }
     
     create(){
+        const music = this.sound.add('music', { loop: true });
+        music.play();
+
         this.graphics = this.add.graphics()
 
         this.widthConstant = 2000
