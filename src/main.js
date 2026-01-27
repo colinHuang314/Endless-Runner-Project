@@ -2,7 +2,11 @@
 Name: Colin Huang
 
 Time Tracked:
-- basic 3d renderer (150 min)
+    - basic 3d renderer (150 min)
+    - drawing player and aligning with camera (60 min)
+    - refactoring player (30 min)
+    - rotating player (60 min)
+    - rotating smoothly (20 min)
 */
 
 config = {
@@ -14,7 +18,8 @@ config = {
     },
     scene: [ Menu ],
     fps: {
-        target: 30
+        target: 60,
+        forceSetTimeOut: true
     }
 
 }

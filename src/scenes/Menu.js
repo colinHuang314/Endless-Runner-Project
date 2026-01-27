@@ -28,6 +28,9 @@ class Menu extends Phaser.Scene{
         this.playerLineWidth = 2
         this.player = new Player(this.camera)
 
+        this.rotationConst = 0.1
+        this.maxTurnAngle = 30
+
         // rect prisms
         this.cubeColor = 0xff47a6
         this.cubeAlpha = 1
@@ -51,13 +54,24 @@ class Menu extends Phaser.Scene{
     }
 
     update() {
+        const startTime = performance.now()
+
         // forward/backward control
         if (keyUP.isDown) {this.camera.z += 2}
         if (keyDOWN.isDown) {this.camera.z -= 2}
         
         // left/right control
-        if (keyRIGHT.isDown) {this.camera.x += 2}
-        if (keyLEFT.isDown) {this.camera.x -= 2}
+        if (keyRIGHT.isDown) {
+            this.camera.x += 2
+            this.rotatePlayer(-this.maxTurnAngle)
+        }
+        else if (keyLEFT.isDown) {
+            this.camera.x -= 2
+            this.rotatePlayer(this.maxTurnAngle)
+        }
+        else{
+            this.rotatePlayer(0)
+        }
         
         // up/down control
         if (keySPACE.isDown) {this.camera.y -= 1}
@@ -69,14 +83,15 @@ class Menu extends Phaser.Scene{
 
 
         // quick and dirty
-        this.player = new Player(this.camera)
+        this.player.updatePosition(this.camera)
 
         this.graphics.clear()
 
-        // camera shake
+        // camera shake (makes graphics choppy)
         // if ((this.frame) % 15 == 0){
-        //     this.camera.x += Math.random() * 2 - 1
-        //     this.camera.y += Math.random() * 2 - 1
+        //     const shakeMagnitude = 4
+        //     this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
+        //     this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
         // }
 
         // quick check
@@ -85,6 +100,7 @@ class Menu extends Phaser.Scene{
             if (pc.y > 0 && pc.y < 100){
                 if (pc.z > 0 && pc.z < 100){
                     console.log("hit first cube")
+                    this.cube1 = []
                 }
             }
 
@@ -92,10 +108,16 @@ class Menu extends Phaser.Scene{
         
         this.draw()
 
+        const endTime = performance.now()
+        const duration = endTime - startTime
+
         this.frame += 1
         if (this.frame >= 15){
+            console.log(`Update loop took: ${duration.toFixed(2)} ms`)
             this.frame = 0
         }
+
+
     }
 
     draw() {
@@ -267,5 +289,13 @@ class Menu extends Phaser.Scene{
         for(const tri of this.player.playerTris){
             this.drawTriangle(tri[0], tri[1], tri[2], this.playerColor, this.playerAlpha)
         }
+    }
+
+    /*
+    for smooth rotation, rotate based off of how much more it needs to rotate
+    */
+    rotatePlayer(targetAngle){
+        const rotationLeft = targetAngle - this.player.rotation
+        this.player.rotation += rotationLeft * this.rotationConst
     }
 }
