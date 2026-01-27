@@ -2,27 +2,39 @@ class Menu extends Phaser.Scene{
     constructor(){
         super("menuScene")
     }
-    preload(){
+    preload(){        
 
     }
     
     create(){
         this.graphics = this.add.graphics()
 
-        this.widthConstant = 600
+        this.widthConstant = 2000
         // acts like render distance too
-        this.minWidth = 0.6
+        this.minWidth = 0.4
         //hides objects in face
         this.maxWidth = 50
         
         this.frame = 1
         
-        this.camera = new Camera(0, 0, -100)
+        this.camera = new Camera(0, 0, -150, 140)
 
-        this.cube1 = this.makeCube(-50, 0, 0, 100)
-        this.cube2 = this.makeCube(-150, 0, 400, 100)
-        this.cube3 = this.makeCube(-50, 0, 800, 100)
-        this.cube4 = this.makeCube(-150, 0, 1200, 100)
+
+        // player
+        this.playerColor = 0x0000bb
+        this.playerAlpha = 0.6
+        this.playerLineColor = 0x7777ff
+        this.playerLineAlpha = 1
+        this.playerLineWidth = 2
+        this.player = new Player(this.camera)
+
+        // rect prisms
+        this.cubeColor = 0xff47a6
+        this.cubeAlpha = 1
+        this.cube1 = this.makeRectangularPrism(-50, -50, 0, 100, 100, 100)
+        this.cube2 = this.makeRectangularPrism(-150, -50, 400, 100, 100, 100)
+        this.cube3 = this.makeRectangularPrism(-50, -50, 800, 100, 100, 100)
+        this.cube4 = this.makeRectangularPrism(-150, -50, 1200, 100, 100, 100)
 
 
         // make keys
@@ -40,28 +52,42 @@ class Menu extends Phaser.Scene{
 
     update() {
         // forward/backward control
-        if (keyUP.isDown) {this.camera.z += 4}
-        if (keyDOWN.isDown) {this.camera.z -= 4}
+        if (keyUP.isDown) {this.camera.z += 2}
+        if (keyDOWN.isDown) {this.camera.z -= 2}
         
         // left/right control
-        if (keyRIGHT.isDown) {this.camera.x += 4}
-        if (keyLEFT.isDown) {this.camera.x -= 4}
+        if (keyRIGHT.isDown) {this.camera.x += 2}
+        if (keyLEFT.isDown) {this.camera.x -= 2}
         
         // up/down control
-        if (keySPACE.isDown) {this.camera.y -= 2}
-        if (keySHIFT.isDown) {this.camera.y += 2}
+        if (keySPACE.isDown) {this.camera.y -= 1}
+        if (keySHIFT.isDown) {this.camera.y += 1}
         
         // fov control
         if (keyIncreaseFov.isDown) {this.camera.fov += 1}
         if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
 
 
+        // quick and dirty
+        this.player = new Player(this.camera)
+
         this.graphics.clear()
 
         // camera shake
-        if ((this.frame) % 15 == 0){
-            this.camera.x += Math.random() * 2 - 1
-            this.camera.y += Math.random() * 2 - 1
+        // if ((this.frame) % 15 == 0){
+        //     this.camera.x += Math.random() * 2 - 1
+        //     this.camera.y += Math.random() * 2 - 1
+        // }
+
+        // quick check
+        const pc = this.player.playerCenter
+        if (pc.x > -50 && pc.x < 50){
+            if (pc.y > 0 && pc.y < 100){
+                if (pc.z > 0 && pc.z < 100){
+                    console.log("hit first cube")
+                }
+            }
+
         }
         
         this.draw()
@@ -73,11 +99,12 @@ class Menu extends Phaser.Scene{
     }
 
     draw() {
+        // lines
         let seen = new Set()
         let queue = [...this.cube1, ...this.cube2, ...this.cube3, ...this.cube4]
 
 
-        queue.sort((a, b) => b.z - a.   z)
+        queue.sort((a, b) => b.z - a.z)
 
         while (queue.length){
             // choose point
@@ -85,15 +112,19 @@ class Menu extends Phaser.Scene{
             // console.log(String(point))
 
             //draw line connections
+            
             for(const conn of point.connections){
                 if (!seen.has(conn)){
-                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, 0xff0000, 1)
+                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.cubeColor, this.cubeAlpha)
                 }
 
             }
             seen.add(point)
             
         }
+
+        // player
+        this.drawPlayer()
         
     }
     
@@ -144,6 +175,7 @@ class Menu extends Phaser.Scene{
         }
 
         const fovScalingFactor = 2 * Math.tan((this.camera.fov/2) * Math.PI / 180)
+
         let planeOfViewSize1 = zDifference1 * fovScalingFactor
         let planeOfViewSize2 = zDifference2 * fovScalingFactor
 
@@ -174,19 +206,19 @@ class Menu extends Phaser.Scene{
     }
 
 
-    makeCube(x, y, z, size){
+    makeRectangularPrism(x, y, z, sizex, sizey, sizez){
         let frontFace = []
-        frontFace.push(new Point(x+size, y+size, z))
-        frontFace.push(new Point(x+size, y, z))
+        frontFace.push(new Point(x+sizex, y+sizey, z))
+        frontFace.push(new Point(x+sizex, y, z))
         frontFace.push(new Point(x, y, z))
-        frontFace.push(new Point(x, y+size, z))
+        frontFace.push(new Point(x, y+sizey, z))
         this.connectPolygon(frontFace)
 
         let backFace = []
-        backFace.push(new Point(x+size, y+size, z+size))
-        backFace.push(new Point(x+size, y, z+size))
-        backFace.push(new Point(x, y, z+size))
-        backFace.push(new Point(x, y+size, z+size))
+        backFace.push(new Point(x+sizex, y+sizey, z+sizez))
+        backFace.push(new Point(x+sizex, y, z+sizez))
+        backFace.push(new Point(x, y, z+sizez))
+        backFace.push(new Point(x, y+sizey, z+sizez))
         this.connectPolygon(backFace)
 
         // conect to make cube
@@ -207,6 +239,33 @@ class Menu extends Phaser.Scene{
                 points[i].addConnection(points[i+1])
                 points[i+1].addConnection(points[i])
             }
+        }
+    }
+
+
+    drawTriangle(p1, p2, p3, color, alpha) {
+        const fovScalingFactor = 2 * Math.tan((this.camera.fov/2) * Math.PI / 180)
+
+        let [p1x, p1y] = this.getProjectedCoords(p1.x, p1.y, (p1.z - this.camera.z) * fovScalingFactor)
+        let [p2x, p2y] = this.getProjectedCoords(p2.x, p2.y, (p2.z - this.camera.z) * fovScalingFactor)
+        let [p3x, p3y] = this.getProjectedCoords(p3.x, p3.y, (p3.z - this.camera.z) * fovScalingFactor)
+
+        this.graphics.lineStyle(this.playerLineWidth, this.playerLineColor, this.playerLineAlpha)
+        this.graphics.fillStyle(color, alpha)
+
+        this.graphics.beginPath()
+        this.graphics.moveTo(p1x, p1y)
+        this.graphics.lineTo(p2x, p2y)
+        this.graphics.lineTo(p3x, p3y)
+        this.graphics.closePath()
+        this.graphics.fillPath()
+
+        this.graphics.strokePath()
+    }
+
+    drawPlayer(){
+        for(const tri of this.player.playerTris){
+            this.drawTriangle(tri[0], tri[1], tri[2], this.playerColor, this.playerAlpha)
         }
     }
 }

@@ -1,5 +1,8 @@
 /*
+Name: Colin Huang
 
+Time Tracked:
+- basic 3d renderer (150 min)
 */
 
 config = {
