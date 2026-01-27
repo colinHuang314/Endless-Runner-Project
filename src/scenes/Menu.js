@@ -4,11 +4,20 @@ class Menu extends Phaser.Scene{
     }
     preload(){        
         this.load.audio('music', './assets/bg-music.mp3')
+        this.load.audio('shipNoise', './assets/shipNoise.wav')
     }
     
     create(){
-        const music = this.sound.add('music', { loop: true });
-        music.play();
+        this.music = this.sound.add('music', { 
+            volume: 0.7,
+            loop: true 
+        })
+        this.shipNoise = this.sound.add('shipNoise', {
+            volume: 1.5
+        })
+        
+        this.music.play()
+        this.shipNoise.play()
 
         this.graphics = this.add.graphics()
 
@@ -65,15 +74,19 @@ class Menu extends Phaser.Scene{
         
         // left/right control
         if (keyRIGHT.isDown) {
-            this.camera.x += 2
+            this.camera.x += 3
             this.rotatePlayer(-this.maxTurnAngle)
+            this.shipNoise.setVolume(3);
         }
         else if (keyLEFT.isDown) {
-            this.camera.x -= 2
+            this.camera.x -= 3
             this.rotatePlayer(this.maxTurnAngle)
+            this.shipNoise.setVolume(3);
+
         }
         else{
             this.rotatePlayer(0)
+            this.shipNoise.setVolume(1.5);
         }
         
         // up/down control

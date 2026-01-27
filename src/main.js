@@ -7,6 +7,8 @@ Time Tracked:
     - refactoring player (30 min)
     - rotating player (60 min)
     - rotating smoothly (20 min)
+    - made and added 1:53 background music track (80 min)
+    - added ship engine noise (20 min)
 */
 
 config = {
