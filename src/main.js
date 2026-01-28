@@ -9,6 +9,8 @@ Time Tracked:
     - rotating smoothly (20 min)
     - made and added 1:53 background music track (80 min)
     - added ship engine noise and collect sfx (20 min)
+    - added spritesheet background by making an animation in blender, exporting the frames, then using ImageMagick, 
+         made it move slightly when player moves for paralax type effect (90 min)
 */
 
 config = {
@@ -31,11 +33,17 @@ let game = new Phaser.Game(config);
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
 
+
 /*
+need to fulful: Include one or more animated characters that use a texture atlas/sprite sheet* (1)
+
+
+could animate a background or have an animation that grows in size to look 3d as it passes by (needs to be a small object for perspective reasons)
+
+animation with sprite sheet could be smoke trailing
 
 cound add a jump or just up and down control
 
-animation with sprite sheet could be smoke trailing
 
 
 

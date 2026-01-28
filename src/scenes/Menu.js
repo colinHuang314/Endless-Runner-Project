@@ -3,14 +3,24 @@ class Menu extends Phaser.Scene{
         super("menuScene")
     }
     preload(){    
-        //audio    
+        // audio    
         this.load.audio('music', './assets/bg-music.mp3')
         this.load.audio('shipNoise', './assets/shipNoise.wav')
         this.load.audio('collect1', './assets/collectSound1.wav')
         this.load.audio('collect2', './assets/collectSound2.wav')
+        
+        // spritesheet background
+        this.load.spritesheet('bgAnim', './assets/starsSpritesheet.png', {
+            frameWidth: 800,
+            frameHeight: 600
+        })
     }
     
     create(){
+        this.graphics = this.add.graphics()
+
+        this.frame = 1 // for debuging for now
+
         // audio
         this.music = this.sound.add('music', { 
             volume: 0.7,
@@ -25,13 +35,24 @@ class Menu extends Phaser.Scene{
         this.collect1 = this.sound.add('collect1', {
             volume: 1
         })
-        
         this.music.play()
         this.shipNoise.play()
 
-        this.graphics = this.add.graphics()
+        // background animation
+        this.bgParalax = 0.1
 
-        this.frame = 1
+        this.anims.create({
+            key: 'bgAnim',
+            frames: this.anims.generateFrameNumbers('bgAnim', { start: 0, end: 99 }),
+            frameRate: 30,
+            repeat: -1
+        })
+        this.bgCenter = [400, 400]
+        this.bgAnimation = this.add.sprite(this.bgCenter[0], this.bgCenter[1], 'bgAnim')
+        this.bgAnimation.setScale(1.4)
+        this.bgAnimation.play('bgAnim')
+        // cover middle of animation with black
+        this.blackOverlay = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
 
 
         // render
@@ -88,16 +109,16 @@ class Menu extends Phaser.Scene{
         if (keyRIGHT.isDown) {
             this.camera.x += 3
             this.rotatePlayer(-this.maxTurnAngle)
-            this.shipNoise.setVolume(3);
+            this.shipNoise.setVolume(3)
         }
         else if (keyLEFT.isDown) {
             this.camera.x -= 3
             this.rotatePlayer(this.maxTurnAngle)
-            this.shipNoise.setVolume(3);
+            this.shipNoise.setVolume(3)
         }
         else{
             this.rotatePlayer(0)
-            this.shipNoise.setVolume(1.5);
+            this.shipNoise.setVolume(1.5)
         }
         
         // up/down control
@@ -112,6 +133,14 @@ class Menu extends Phaser.Scene{
         // refactor camera following player?
         this.camera.z += this.playerSpeed
         this.player.updatePosition(this.camera)
+
+        // small paralax effect
+        this.bgAnimation.x = this.bgCenter[0] - this.camera.x * this.bgParalax
+        this.bgAnimation.y = this.bgCenter[1] - this.camera.y * this.bgParalax
+
+        // move circle with background
+        this.blackOverlay.x = this.bgAnimation.x
+        this.blackOverlay.y = this.bgAnimation.y
 
         // collision
         this.checkCollision()
