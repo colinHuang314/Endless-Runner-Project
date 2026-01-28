@@ -21,7 +21,7 @@ config = {
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [ Menu ],
+    scene: [ Menu, Play],
     fps: {
         target: 60,
         forceSetTimeOut: true
@@ -30,7 +30,7 @@ config = {
 }
 
 
-let game = new Phaser.Game(config);
+let game = new Phaser.Game(config)
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
 
