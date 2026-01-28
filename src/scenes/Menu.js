@@ -17,17 +17,15 @@ class Menu extends Phaser.Scene{
     }
     
     create(){
-        this.graphics = this.add.graphics()
-
         this.frame = 1 // for debuging for now
 
         // audio
         this.music = this.sound.add('music', { 
-            volume: 0.7,
+            volume: 0.5,
             loop: true 
         })
         this.shipNoise = this.sound.add('shipNoise', {
-            volume: 1.5
+            volume: 2
         })
         this.collect1 = this.sound.add('collect1', {
             volume: 1
@@ -53,6 +51,9 @@ class Menu extends Phaser.Scene{
         this.bgAnimation.play('bgAnim')
         // cover middle of animation with black
         this.blackOverlay = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
+
+        // graphics after background
+        this.graphics = this.add.graphics()
 
 
         // render
@@ -109,16 +110,16 @@ class Menu extends Phaser.Scene{
         if (keyRIGHT.isDown) {
             this.camera.x += 3
             this.rotatePlayer(-this.maxTurnAngle)
-            this.shipNoise.setVolume(3)
+            this.shipNoise.setVolume(4)
         }
         else if (keyLEFT.isDown) {
             this.camera.x -= 3
             this.rotatePlayer(this.maxTurnAngle)
-            this.shipNoise.setVolume(3)
+            this.shipNoise.setVolume(4)
         }
         else{
             this.rotatePlayer(0)
-            this.shipNoise.setVolume(1.5)
+            this.shipNoise.setVolume(2)
         }
         
         // up/down control
@@ -164,8 +165,6 @@ class Menu extends Phaser.Scene{
             console.log(`Update loop took: ${duration.toFixed(2)} ms`)
             this.frame = 0
         }
-
-
     }
 
     draw() {
