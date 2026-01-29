@@ -59,18 +59,27 @@ class Play extends Phaser.Scene{
         // camera
         this.camera = new Camera(0, 0, -150, 140)
 
+        //camera physics
+        this.followConst = 0.1
+
 
         // player
-        this.playerColor = 0x0000bb
+        this.playerColor = 0x0000c0
         this.playerAlpha = 0.6
         this.playerLineColor = 0x7777ff
         this.playerLineAlpha = 1
         this.playerLineWidth = 2
-        this.player = new Player(this.camera)
+        this.player = new Player(0, 20, -120)
 
+        // player physics
         this.playerSpeed = 2
         this.rotationConst = 0.1
         this.maxTurnAngle = 30
+        
+        this.jumpStrength = 10
+        this.gravityConst = 0.2
+        this.yVelocity = 2 // could put in player
+        this.grounded = false
 
         // collectables
         this.collectables = []
@@ -88,14 +97,15 @@ class Play extends Phaser.Scene{
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
         keyDOWN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
+
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
         keyLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
+
         keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
         keySHIFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
 
         keyIncreaseFov = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
         keyDecreaseFov = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
-
     }
 
     update() {
@@ -103,12 +113,12 @@ class Play extends Phaser.Scene{
         
         // left/right control
         if (keyRIGHT.isDown) {
-            this.camera.x += 2
+            this.player.x += 2
             this.rotatePlayer(-this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
         else if (keyLEFT.isDown) {
-            this.camera.x -= 2
+            this.player.x -= 2
             this.rotatePlayer(this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
@@ -117,26 +127,45 @@ class Play extends Phaser.Scene{
             this.shipNoise.setVolume(2)
         }
         
-        // up/down control
-        if (keyUP.isDown) {this.camera.y -= 1}
-        if (keyDOWN.isDown) {this.camera.y += 1}
+        // jump
+        if (Phaser.Input.Keyboard.JustDown(keyUP)) {
+            this.yVelocity -= this.jumpStrength
+            this.grounded = false
+            this.shipNoise.setVolume(4)
+            
+        }
+
+        this.applyGravity()
         
         // fov control
         if (keyIncreaseFov.isDown) {this.camera.fov += 1}
         if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
 
-        // camera shake (makes graphics choppy)
+        // camera shake
         this.applyTurbulenceEffect()
         
 
-        // dont let player go too low (floor at 250)
-        if(this.camera.y > 230) this.camera.y = 230
+        // dont let player go too low (floor drawn at 250)
+        if(this.player.y > 245) {
+            this.player.y = 245
+            this.yVelocity = 0
+            this.grounded = true
+            this.shipNoise.setVolume(2)
+
+        }
 
         // forward movememt
-        // refactor camera following player?
-        this.camera.z += this.playerSpeed
-        this.player.updatePosition(this.camera)
+        this.player.z += this.playerSpeed
+        this.player.makePlayer() // update points
 
+        // camera follow
+        this.camera.follow(this.player.x, this.player.y - 20, this.player.z - 20, this.followConst)
+
+        // collision
+        this.checkCollision()
+
+        //////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////
         // small paralax effect
         this.bgAnimation.x = this.bgCenter[0] - this.camera.x * this.bgParalax
         this.bgAnimation.y = this.bgCenter[1] - this.camera.y * this.bgParalax
@@ -145,11 +174,6 @@ class Play extends Phaser.Scene{
         this.blackCircle.x = this.bgAnimation.x
         this.blackCircle.y = this.bgAnimation.y
 
-        // collision
-        this.checkCollision()
-
-        //////////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////////
         // clear
         this.graphics.clear()
 
@@ -169,9 +193,9 @@ class Play extends Phaser.Scene{
         const duration = endTime - startTime
 
         this.frame += 1
-        if (this.debug && this.frame % 10 == 0){
+        if (this.debug && this.frame % (10) == 0){
             console.log(`Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
-            if (this.frame >= 60) this.frame = 0 // reset
+            if (this.frame >= this.fps) this.frame = 0 // reset
         }
     }
 
@@ -228,7 +252,7 @@ class Play extends Phaser.Scene{
             const size = 50 // need to refactor
 
             //check if behind camera
-            if (cz < this.camera.z){
+            if (cz < (this.camera.z - 100)){
                 this.collectables.splice(i, 1) // delete
                 continue
             }
@@ -383,29 +407,33 @@ class Play extends Phaser.Scene{
     }
 
 
-    drawTriangle(p1, p2, p3, color, alpha) {
+    drawPoly(poly, color, alpha) {
+        if(poly.length <= 1) return
         const fovScalingFactor = 2 * Math.tan((this.camera.fov/2) * Math.PI / 180)
-
-        let [p1x, p1y] = this.getProjectedCoords(p1.x, p1.y, (p1.z - this.camera.z) * fovScalingFactor)
-        let [p2x, p2y] = this.getProjectedCoords(p2.x, p2.y, (p2.z - this.camera.z) * fovScalingFactor)
-        let [p3x, p3y] = this.getProjectedCoords(p3.x, p3.y, (p3.z - this.camera.z) * fovScalingFactor)
 
         this.graphics.lineStyle(this.playerLineWidth, this.playerLineColor, this.playerLineAlpha)
         this.graphics.fillStyle(color, alpha)
 
         this.graphics.beginPath()
-        this.graphics.moveTo(p1x, p1y)
-        this.graphics.lineTo(p2x, p2y)
-        this.graphics.lineTo(p3x, p3y)
-        this.graphics.closePath()
-        this.graphics.fillPath()
 
+        const [p1x, p1y] = this.getProjectedCoords(poly[0].x, poly[0].y, (poly[0].z - this.camera.z) * fovScalingFactor)
+        this.graphics.moveTo(p1x, p1y)
+
+        for (let i = 1; i < poly.length; i++){
+            const [px, py] = this.getProjectedCoords(poly[i].x, poly[i].y, (poly[i].z - this.camera.z) * fovScalingFactor)
+            this.graphics.lineTo(px, py)
+
+            this.linesDrawn += 1
+        }        
+
+        this.graphics.closePath()
+        this.graphics.fillPath()    
         this.graphics.strokePath()
     }
 
     drawPlayer(){
         for(const poly of this.player.playerPolys){
-            this.drawTriangle(poly[0], poly[1], poly[2], this.playerColor, this.playerAlpha)
+            this.drawPoly(poly, this.playerColor, this.playerAlpha)
         }
     }
 
@@ -466,5 +494,23 @@ class Play extends Phaser.Scene{
                 this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
             }        
         }
+    }
+
+    applyGravity(){
+        if (this.grounded) return
+
+        this.yVelocity += this.gravityConst
+
+        // custom jump physics
+        if (this.yVelocity > 2 ){
+            this.yVelocity += this.gravityConst * 0.7
+        }
+
+        // terminal velocity
+        if (this.yVelocity > 16){
+            this.yVelocity = 16
+        }
+
+        this.player.y += this.yVelocity
     }
 }

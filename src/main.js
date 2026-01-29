@@ -13,7 +13,12 @@ Time Tracked:
         then using ImageMagick to create the spritesheet (https://imagemagick.org/index.php#gsc.tab=0), 
         made it move slightly when player moves for paralax type effect (100 min)
     - started menu scene (10 min)
-    - added menu text, made a pyramid constructor, added jitter, trailblur, turbulence effects, added a floor to scene, deleted objects that pass behind the player for optimization
+    - added menu text (5 min)
+    - made a pyramid constructor (10 min)
+    - added jitter, trailblur, turbulence effects (60 min)
+    - added a floor to scene (40 min)
+    - deleted objects that pass behind the player for optimization (5 min)
+    - refactoring, player jump, load screen
 */
 
 config = {
@@ -26,7 +31,7 @@ config = {
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [ Menu, Play],
+    scene: [ Load, Menu, Play ],
     fps: {
         target: 60,
         forceSetTimeOut: true
@@ -36,6 +41,8 @@ config = {
 
 
 let game = new Phaser.Game(config)
+
+let fps = game.config.fps.target
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
 
@@ -63,7 +70,7 @@ break animations: objects break into lines or polygons upon collision
 
 
 Use multiple Scene classes (dictated by your game's style) (1)
-    menu, play, credits
+    load, menu, play, credits, game over on top of play
 Properly transition between Scenes and allow the player to restart w/out having to reload the page (1)
     like in rocket patrol
 Include in-game instructions using text or other means (e.g., tooltips, tutorial, diagram, etc.) (1)

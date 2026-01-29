@@ -3,17 +3,7 @@ class Menu extends Phaser.Scene{
         super("menuScene")
     }
     preload(){
-        // audio    
-        this.load.audio('music', './assets/bg-music.mp3')
-        this.load.audio('shipNoise', './assets/shipNoise.wav')
-        this.load.audio('collect1', './assets/collectSound1.wav')
-        this.load.audio('collect2', './assets/collectSound2.wav')
         
-        // spritesheet background
-        this.load.spritesheet('bgAnim', './assets/starsSpritesheet.png', {
-            frameWidth: 800,
-            frameHeight: 600
-        })
     }
     
     create(){

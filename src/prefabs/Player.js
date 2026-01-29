@@ -1,13 +1,10 @@
 class Player{
-    constructor(camera){
-        this.camera = camera
+    constructor(x, y, z){
+        this.x = x
+        this.y = y
+        this.z = z
         this.playerPolys = [] // main component of player
         this.rotation = 0
-
-        this.playerY = this.camera.y + 20
-
-        // for collision
-        this.playerCenter = new Point(this.camera.x, this.playerY, this.camera.z + 30)
 
         this.makePlayer()
     }
@@ -18,46 +15,37 @@ class Player{
         this.playerPolys = []
         
         // Update player position based on current camera
-        this.playerY = this.camera.y + 20
-        this.playerCenter = new Point(this.camera.x, this.playerY, this.camera.z + 30)
+        this.playerCenter = new Point(this.x, this.y, this.z)
 
         // player parts
-        let playerTip = []
-        playerTip.push(new Point(this.camera.x - 5, this.playerY, this.camera.z + 40))
-        playerTip.push(new Point(this.camera.x + 5, this.playerY, this.camera.z + 40))
-        playerTip.push(new Point(this.camera.x, this.playerY, this.camera.z + 47))
+        let tipBase = []
+        tipBase.push(new Point(this.x - 5, this.y, this.z + 10))
+        tipBase.push(new Point(this.x + 5, this.y, this.z + 10))
+        tipBase.push(new Point(this.x, this.y, this.z + 17))
 
         let wingLeft01 = []
-        const leftTip = playerTip[0]
+        const leftTip = tipBase[0]
         wingLeft01.push(leftTip)
-        wingLeft01.push(new Point(leftTip.x - 10, this.playerY, leftTip.z))
-        wingLeft01.push(new Point(leftTip.x - 20, this.playerY, leftTip.z - 8))
+        wingLeft01.push(new Point(leftTip.x - 10, this.y, leftTip.z))
+        wingLeft01.push(new Point(leftTip.x - 20, this.y, leftTip.z - 8))
+        wingLeft01.push(new Point(leftTip.x, this.y, leftTip.z - 8))
 
         let wingRight01 = []
-        const rightTip = playerTip[1]
+        const rightTip = tipBase[1]
         wingRight01.push(rightTip)
-        wingRight01.push(new Point(rightTip.x + 10, this.playerY, rightTip.z))
-        wingRight01.push(new Point(rightTip.x + 20, this.playerY, rightTip.z - 8))
-
-        let wingLeft02 = []
-        wingLeft02.push(leftTip)
-        wingLeft02.push(wingLeft01[2])
-        wingLeft02.push(new Point(leftTip.x, this.playerY, leftTip.z - 8))
-
-        let wingRight02 = []
-        wingRight02.push(rightTip)
-        wingRight02.push(wingRight01[2])
-        wingRight02.push(new Point(rightTip.x, this.playerY, rightTip.z - 8))
+        wingRight01.push(new Point(rightTip.x + 10, this.y, rightTip.z))
+        wingRight01.push(new Point(rightTip.x + 20, this.y, rightTip.z - 8))
+        wingRight01.push(new Point(rightTip.x, this.y, rightTip.z - 8))
         
         let bodyLeft = []
         bodyLeft.push(leftTip)
-        bodyLeft.push(wingLeft02[2])
-        bodyLeft.push(new Point(this.camera.x, this.playerY, leftTip.z - 15))
+        bodyLeft.push(wingLeft01[3])
+        bodyLeft.push(new Point(this.x, this.y, leftTip.z - 15))
 
         let bodyRight = []
         bodyRight.push(rightTip)
-        bodyRight.push(wingRight02[2])
-        bodyRight.push(new Point(this.camera.x, this.playerY, rightTip.z - 15))
+        bodyRight.push(wingRight01[3])
+        bodyRight.push(new Point(this.x, this.y, rightTip.z - 15))
 
         let bodyMiddle = []
         bodyMiddle.push(leftTip)
@@ -66,24 +54,39 @@ class Player{
 
         let tailLeft = []
         tailLeft.push(bodyLeft[2])
-        tailLeft.push(new Point(this.camera.x - 7, this.playerY, leftTip.z - 20))
-        tailLeft.push(new Point(this.camera.x - 3, this.playerY, leftTip.z - 20))
+        tailLeft.push(new Point(this.x - 7, this.y, leftTip.z - 20))
+        tailLeft.push(new Point(this.x - 3, this.y, leftTip.z - 20))
 
         let tailRight = []
         tailRight.push(bodyRight[2])
-        tailRight.push(new Point(this.camera.x + 7, this.playerY, rightTip.z - 20))
-        tailRight.push(new Point(this.camera.x + 3, this.playerY, rightTip.z - 20))
+        tailRight.push(new Point(this.x + 7, this.y, rightTip.z - 20))
+        tailRight.push(new Point(this.x + 3, this.y, rightTip.z - 20))
+
+        /////////////////////////////////////////////////////////////////////////////////
+        //////////////////////////    3d parts         ///////////////////
+        /////////////////////////////////////////////////////////////////////////////////
+
+        let tipTopBack = []
+        tipTopBack.push(tipBase[0], tipBase[1])
+        tipTopBack.push(new Point(this.x, this.y - 3, this.z + 17))
+
+        let tipTopLeft = [tipBase[0], tipBase[2], tipTopBack[2]]
+        let tipTopRight = [tipBase[1], tipBase[2], tipTopBack[2]]
+
 
         // combine parts
-        this.playerPolys.push(playerTip, wingLeft01, wingRight01, wingLeft02, wingRight02, bodyLeft, bodyRight, bodyMiddle, tailLeft, tailRight)
+        this.playerPolys.push(tipBase, wingLeft01, wingRight01, bodyLeft, bodyRight, bodyMiddle, tailLeft, tailRight)
+        this.playerPolys.push(tipTopBack, tipTopLeft, tipTopRight)
 
         // now rotate
         this.applyRotation()
     }
 
     // for update loop
-    updatePosition(camera){
-        this.camera = camera
+    updatePosition(dx, dy, dz){
+        this.x += dx
+        this.y += dy
+        this.z += dz
         this.makePlayer()
     }
 
