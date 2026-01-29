@@ -6,7 +6,15 @@ class RectPrism{
         this.z = z
         this.type = type
 
-        if(type === 'large'){
+        if (type === 'short wall'){
+            this.sizeX = 200
+            this.sizeY = 35
+            this.sizeZ = 30
+            this.color = 0xff0000
+            this.alpha = 1
+            this.relativeWidth = 4
+        }
+        else if(type === 'large'){
             this.sizeX = 50
             this.sizeY = 50
             this.sizeZ = 50

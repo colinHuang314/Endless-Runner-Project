@@ -2,16 +2,22 @@ class Play extends Phaser.Scene{
     constructor(){
         super("playScene")
     }
-    preload(){    
-        
-    }
     
     create(){
         this.helpers = new Helpers()
         this.debug = true
 
+        this.frame = 1 // for debuging for now
+        this.linesDrawn = 0
+
         // game
         this.score = 0
+
+        // effects
+        this.jitterEffect = true
+        this.shakeEffect = false
+        this.trailBlurEffect = true
+
 
         let scoreConfig = {
             fontFamily: 'Courier',
@@ -27,15 +33,7 @@ class Play extends Phaser.Scene{
             fixedWidth: 0
         }
         // display menu text
-        this.add.text(game.config.width/2, 40, `Score ${this.score}`, scoreConfig).setOrigin(0.5)
-
-        // effects
-        this.jitterEffect = true
-        this.turbulenceEffect = false
-        this.trailBlurEffect = true
-
-        this.frame = 1 // for debuging for now
-        this.linesDrawn = 0
+        this.scoreText = this.add.text(game.config.width/2, 40, `Score ${this.score}`, scoreConfig).setOrigin(0.5)
 
         // audio
         this.music = this.sound.add('music', { 
@@ -48,6 +46,7 @@ class Play extends Phaser.Scene{
         })
         this.collect1 = this.sound.add('collect1', {volume: 1})
         this.collect2 = this.sound.add('collect2', {volume: 1})
+        this.crash = this.sound.add('crash', {volume: 1})
 
         this.music.play()
         this.shipNoise.play()
@@ -58,6 +57,8 @@ class Play extends Phaser.Scene{
         this.bgAnimation = this.add.sprite(this.bgCenter[0], this.bgCenter[1], 'bgAnim')
         this.bgAnimation.setScale(1.4)
         this.bgAnimation.play('bgAnim')
+
+
         // cover middle of animation with black
         this.blackCircle = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
 
@@ -81,7 +82,7 @@ class Play extends Phaser.Scene{
 
             
         // camera
-        this.camera = new Camera(0, 0, -500, 140)
+        this.camera = new Camera(20, 0, -500, 140)
 
         //camera physics
         this.followConst = 0.1
@@ -94,14 +95,14 @@ class Play extends Phaser.Scene{
         this.playerLineColor = 0x7777ff
         this.playerLineAlpha = 1
         this.playerLineWidth = 2
-        this.player = new Player(0, 20, -120)
+        this.player = new Player(20, 20, -120)
 
         // player physics
         this.playerSpeed = 2
         this.rotationConst = 0.1
         this.maxTurnAngle = 30
         
-        this.jumpStrength = 10
+        this.jumpStrength = 8
         this.gravityConst = 0.2
         this.yVelocity = 2 // could put in player
         this.grounded = false
@@ -151,12 +152,13 @@ class Play extends Phaser.Scene{
         
         let playerMovementVector = new Phaser.Math.Vector2(0, 0)
 
-        if (keyRIGHT.isDown) {
+    
+        if (keyRIGHT.isDown && (!this.crashed)) {
             playerMovementVector.x += 2
             this.rotatePlayer(-this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
-        else if (keyLEFT.isDown) {
+        else if (keyLEFT.isDown && (!this.crashed)) {
             playerMovementVector.x -= 2
             this.rotatePlayer(this.maxTurnAngle)
             this.shipNoise.setVolume(4)
@@ -166,8 +168,9 @@ class Play extends Phaser.Scene{
             this.shipNoise.setVolume(2)
         }
         
+        
         // jump
-        if (Phaser.Input.Keyboard.JustDown(keyUP)) {
+        if (this.grounded && (!this.crashed) && Phaser.Input.Keyboard.JustDown(keyUP)) {
             this.yVelocity -= this.jumpStrength
             this.grounded = false            
         }
@@ -175,13 +178,30 @@ class Play extends Phaser.Scene{
 
 
         this.applyGravity()
+
+        if(this.crashed){
+            this.applyCrashFriction()
+            if(this.playerSpeed < 0.01){
+                this.bgAnimation.anims.stop()
+            }
+            else this.bgAnimation.anims.msPerFrame = 1000/60 * 2 / this.playerSpeed
+
+
+        }
+        if(this.playerSpeed <= 0){
+            this.shakeEffect = false
+            this.scene.pause('playScene')
+            this.scene.launch('gameOverScene')
+
+            console.log("GAME OVER") // game over
+        }
         
         // fov control
         if (keyIncreaseFov.isDown) {this.camera.fov += 1}
         if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
 
         // camera shake
-        this.applyTurbulenceEffect()
+        this.applyShakeEffect()
         
 
         // dont let player go too low (floor drawn at 250)
@@ -196,9 +216,11 @@ class Play extends Phaser.Scene{
         // forward movememt
         playerMovementVector.y += this.playerSpeed // the .y is actually z
 
-        // move player
+        // move player on x
         this.player.x += playerMovementVector.x
-        this.player.z += playerMovementVector.y
+        
+        this.player.z += playerMovementVector.y // forward movement
+        
         // update player points
         this.player.makePlayer()
 
@@ -207,6 +229,8 @@ class Play extends Phaser.Scene{
 
         // collision
         this.checkCollision()
+
+        this.scoreText.text = `Score ${this.score}`
 
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
@@ -221,7 +245,7 @@ class Play extends Phaser.Scene{
 
             if(Math.random() < 0.25){
                 pyramidType = 'high'
-                pyramidY = 0
+                pyramidY = 100
             }
             else{
                 pyramidType = 'normal'
@@ -239,7 +263,11 @@ class Play extends Phaser.Scene{
                 let obyType = 'none'
 
                 const rand = Math.random()
-                if(rand < 0.3){
+                if (rand < 0.1){
+                    obyType = 'short wall'
+                    obyY = 220
+                }
+                else if(rand < 0.3){
                     obyType = 'large'
                     obyY = 200
                 }
@@ -358,7 +386,12 @@ class Play extends Phaser.Scene{
             if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
                 if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
                     if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
-                        this.collect1.play() // audio
+                        if (this.collectables[i].type === 'high'){
+                            this.collect2.play() // sfx
+                        }
+                        else{
+                            this.collect1.play() // sfx
+                        }
                         this.score += this.collectables[i].pointValue
                         this.collectables.splice(i, 1) // delete
                     }
@@ -367,22 +400,29 @@ class Play extends Phaser.Scene{
         }
 
         //obstacles
-        for (let i = 0; i < this.obstacles.length; i++){
-            if(this.obstacles[i].points.length === 0) continue
+        if (!this.crashed){
+            for (let i = 0; i < this.obstacles.length; i++){
+                if(this.obstacles[i].points.length === 0) continue
 
-            let [cx, cy, cz] = [this.obstacles[i].x, this.obstacles[i].y, this.obstacles[i].z]
-            let [sizeX, sizeY, sizeZ] = [this.obstacles[i].sizeX, this.obstacles[i].sizeY, this.obstacles[i].sizeZ]
-            //check if behind player
-            if (cz < (this.player.z - 100)){
-                this.obstacles.splice(i, 1) // delete
-                continue
-            }
-            // check all dimensions is order of relevance
-            // uses magic numbers for player hitbox
-            if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
-                if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
-                    if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
-                        console.log("You LOSE")
+                let [cx, cy, cz] = [this.obstacles[i].x, this.obstacles[i].y, this.obstacles[i].z]
+                let [sizeX, sizeY, sizeZ] = [this.obstacles[i].sizeX, this.obstacles[i].sizeY, this.obstacles[i].sizeZ]
+                //check if behind player
+                if (cz < (this.player.z - 100)){
+                    this.obstacles.splice(i, 1) // delete
+                    continue
+                }
+                // check all dimensions is order of relevance
+                // uses magic numbers for player hitbox
+                if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
+                    if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
+                        if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
+                            this.crash.play()
+                            this.crashed = true
+
+                            this.music.stop()
+                            this.shakeEffect = true
+                            console.log("CRASHED")
+                        }
                     }
                 }
             }
@@ -552,8 +592,8 @@ class Play extends Phaser.Scene{
     }
 
     // shakes the camera like when an explosion happens maybe
-    applyTurbulenceEffect(){
-        if (this.turbulenceEffect){
+    applyShakeEffect(){
+        if (this.shakeEffect){
             if ((this.frame) % 2 == 0){
                 const shakeMagnitude = 3
                 this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
@@ -578,5 +618,16 @@ class Play extends Phaser.Scene{
         }
 
         this.player.y += this.yVelocity
+    }
+
+    applyCrashFriction(){
+        if(this.playerSpeed <= 0) return
+
+        if (this.playerSpeed < 0.5){
+            this.playerSpeed -= 0.02
+        }
+        else{
+            this.playerSpeed *= 0.99
+        }
     }
 }

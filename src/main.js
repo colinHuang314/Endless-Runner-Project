@@ -22,6 +22,7 @@ Time Tracked:
     - made player 3d (30 min)
     ---------- 12 hr mark 1/28/2026 -------------
     - added helper class, added pyramid class added random generation, refactored drawing loop, refactored collision
+    - added crash sound and gameover scene
 */
 
 config = {
@@ -34,7 +35,7 @@ config = {
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [ Load, Menu, Play ],
+    scene: [ Load, Menu, Play, GameOver],
     fps: {
         target: 60,
         forceSetTimeOut: true
