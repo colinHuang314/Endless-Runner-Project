@@ -37,6 +37,7 @@ class Menu extends Phaser.Scene{
         let menuConfig = {
             fontFamily: 'Courier',
             fontSize: '28px',
+            fontStyle: 'bold',
             backgroundColor: '#F3B141',
             color: '#843605',
             align: 'right',
@@ -47,11 +48,17 @@ class Menu extends Phaser.Scene{
             fixedWidth: 0
         }
         // display menu text
-        this.add.text(game.config.width/2, game.config.height/2 - 32, 'Space Cruiser', menuConfig).setOrigin(0.5)
-        this.add.text(game.config.width/2, game.config.height/2, 'Use ←→↕ arrows to move', menuConfig).setOrigin(0.5)
+        menuConfig.fontSize = '80px'
+        this.add.text(game.config.width/2, 128, 'Galaxy Cruiser', menuConfig).setOrigin(0.5)
+        menuConfig.fontSize = '28px'
+        this.add.text(game.config.width/2, game.config.height/2 - 40, 'Use ←→↑↓ arrows to move', menuConfig).setOrigin(0.5)
+        menuConfig.backgroundColor = '#ff47a6'
+        this.add.text(game.config.width/2, game.config.height/2 + 0, 'Collect Pyramids for points', menuConfig).setOrigin(0.5)
+        menuConfig.backgroundColor = '#FF0000'
+        this.add.text(game.config.width/2, game.config.height/2 + 40, 'Dont hit RED!', menuConfig).setOrigin(0.5)
         menuConfig.backgroundColor = '#00FF00'
         menuConfig.color = '#000'
-        this.add.text(game.config.width/2, game.config.height/2 + 32, 'Press → to start', menuConfig).setOrigin(0.5)
+        this.add.text(game.config.width/2, game.config.height/2 + 80, 'Press → to start', menuConfig).setOrigin(0.5)
     
         // keys
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)

@@ -1,7 +1,7 @@
 class Player{
     constructor(camera){
         this.camera = camera
-        this.playerTris = [] // main component of player
+        this.playerPolys = [] // main component of player
         this.rotation = 0
 
         this.playerY = this.camera.y + 20
@@ -15,7 +15,7 @@ class Player{
     makePlayer(){
         /*assumes no rotation and rotates later*/
     
-        this.playerTris = []
+        this.playerPolys = []
         
         // Update player position based on current camera
         this.playerY = this.camera.y + 20
@@ -75,7 +75,7 @@ class Player{
         tailRight.push(new Point(this.camera.x + 3, this.playerY, rightTip.z - 20))
 
         // combine parts
-        this.playerTris.push(playerTip, wingLeft01, wingRight01, wingLeft02, wingRight02, bodyLeft, bodyRight, bodyMiddle, tailLeft, tailRight)
+        this.playerPolys.push(playerTip, wingLeft01, wingRight01, wingLeft02, wingRight02, bodyLeft, bodyRight, bodyMiddle, tailLeft, tailRight)
 
         // now rotate
         this.applyRotation()
@@ -106,8 +106,8 @@ class Player{
         const rotatedPoints = new Set()
 
         // rotate every point
-        for (const tri of this.playerTris) {
-            for (const point of tri) {
+        for (const poly of this.playerPolys) {
+            for (const point of poly) {
                 if (rotatedPoints.has(point)){continue}
                 this.rotatePoint(this.playerCenter.x, this.playerCenter.y, point, this.rotation)
                 rotatedPoints.add(point)

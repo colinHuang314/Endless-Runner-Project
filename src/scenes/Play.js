@@ -7,7 +7,14 @@ class Play extends Phaser.Scene{
     }
     
     create(){
+        this.debug = true
+        // effects
+        this.jitterEffect = true
+        this.turbulenceEffect = false
+        this.trailBlurEffect = true
+
         this.frame = 1 // for debuging for now
+        this.linesDrawn = 0
 
         // audio
         this.music = this.sound.add('music', { 
@@ -28,13 +35,23 @@ class Play extends Phaser.Scene{
         this.bgAnimation.setScale(1.4)
         this.bgAnimation.play('bgAnim')
         // cover middle of animation with black
-        this.blackOverlay = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
+        this.blackCircle = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
+
 
         // add graphics after background
-        this.graphics = this.add.graphics()
+        /* i first tried drawing a transparent black rect over the whole screen each frame but it slowed down the game for the acculumating draw calls */
+        if (this.trailBlurEffect){
+            this.trailTexture = this.add.renderTexture(0, 0, 800, 600).setOrigin(0, 0)
+            this.trailTexture.setBlendMode(Phaser.BlendModes.ADD)
+            this.graphics = this.make.graphics({ x: 0, y: 0, add: false })
+        }
+        else{
+            this.graphics = this.add.graphics()
+        }
+
 
         // render consts
-        this.widthConstant = 2000
+        this.widthConstant = 1600
         this.minWidth = 0.4  // acts like render distance too
         this.maxWidth = 50   //makes close objects transparent
 
@@ -64,8 +81,9 @@ class Play extends Phaser.Scene{
         this.cube3 = this.makeRectangularPrism(-50, -50, 800, 50, 50, 50)
         this.cube4 = this.makeRectangularPrism(-150, -50, 1200, 50, 50, 50)
         this.cube5 = this.makeRectangularPrism(-250, -50, 1600, 50, 50, 50)
+        this.pyramid1 = this.makePyramid(0, 0, 500, 25, 25, 20)
 
-        this.collectables.push(this.cube1, this.cube2, this.cube3, this.cube4, this.cube5)
+        this.collectables.push(this.cube1, this.cube2, this.cube3, this.cube4, this.cube5, this.pyramid1)
 
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
@@ -107,7 +125,14 @@ class Play extends Phaser.Scene{
         if (keyIncreaseFov.isDown) {this.camera.fov += 1}
         if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
 
+        // camera shake (makes graphics choppy)
+        this.applyTurbulenceEffect()
+        
 
+        // dont let player go too low (floor at 250)
+        if(this.camera.y > 230) this.camera.y = 230
+
+        // forward movememt
         // refactor camera following player?
         this.camera.z += this.playerSpeed
         this.player.updatePosition(this.camera)
@@ -117,34 +142,45 @@ class Play extends Phaser.Scene{
         this.bgAnimation.y = this.bgCenter[1] - this.camera.y * this.bgParalax
 
         // move circle with background
-        this.blackOverlay.x = this.bgAnimation.x
-        this.blackOverlay.y = this.bgAnimation.y
+        this.blackCircle.x = this.bgAnimation.x
+        this.blackCircle.y = this.bgAnimation.y
 
         // collision
         this.checkCollision()
 
+        //////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////
+        // clear
         this.graphics.clear()
 
-        // camera shake (makes graphics choppy)
-        // if ((this.frame) % 15 == 0){
-        //     const shakeMagnitude = 4
-        //     this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
-        //     this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
-        // }        
-        
+        // darken
+        const trailLengthConst = 0.19 // alpha multiplier
+        if(this.trailBlurEffect) this.trailTexture.fill(0x000000, trailLengthConst)
+
+        //obja and player
         this.draw()
 
+        //stamp
+        if (this.trailBlurEffect) this.trailTexture.draw(this.graphics)
+
+
+        // for debug
         const endTime = performance.now()
         const duration = endTime - startTime
 
         this.frame += 1
-        if (this.frame >= 15){
-            console.log(`Update loop took: ${duration.toFixed(2)} ms`)
-            this.frame = 0
+        if (this.debug && this.frame % 10 == 0){
+            console.log(`Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
+            if (this.frame >= 60) this.frame = 0 // reset
         }
     }
 
     draw() {
+        this.linesDrawn = 0
+
+        // floor
+        this.drawFloor()
+
         // draw lines
         let seen = new Set()
 
@@ -153,9 +189,7 @@ class Play extends Phaser.Scene{
             // add all points of collectables
             queue.push(...item)
         }
-
-
-        queue.sort((a, b) => b.z - a.z)
+        // queue.sort((a, b) => b.z - a.z)
 
         while (queue.length){
             // choose point
@@ -166,7 +200,7 @@ class Play extends Phaser.Scene{
             
             for(const conn of point.connections){
                 if (!seen.has(conn)){
-                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.collectableColor, this.collectableAlpha)
+                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.collectableColor, this.collectableAlpha, this.widthConstant)
                 }
 
             }
@@ -176,11 +210,14 @@ class Play extends Phaser.Scene{
 
         // draw player
         this.drawPlayer()
+
+        
         
     }
     
     /*collision between player and collectables or obstacles */
     // need to refactor
+    // add player wing in hitbox
     checkCollision(){
         const pc = this.player.playerCenter
 
@@ -190,6 +227,11 @@ class Play extends Phaser.Scene{
             let [cx, cy, cz] = [this.collectables[i][2].x, this.collectables[i][2].y, this.collectables[i][2].z] // refactor
             const size = 50 // need to refactor
 
+            //check if behind camera
+            if (cz < this.camera.z){
+                this.collectables.splice(i, 1) // delete
+                continue
+            }
             // check z first for speed
             if (pc.z > cz && pc.z < cz + size){
                 if (pc.y > cy && pc.y < cy + size){
@@ -215,12 +257,16 @@ class Play extends Phaser.Scene{
         if(planeOfViewSize === 0){
             planeOfViewSize = 0.03
         }
-        const x = (px - (this.camera.x - planeOfViewSize/2)) / planeOfViewSize * this.game.config.width
-        const y = (py - (this.camera.y - planeOfViewSize/2)) / planeOfViewSize * this.game.config.width
+        let x = (px - (this.camera.x - planeOfViewSize/2)) / planeOfViewSize * this.game.config.width
+        let y = (py - (this.camera.y - planeOfViewSize/2)) / planeOfViewSize * this.game.config.width
+
+        let [jx, jy] = this.applyJitterEffect(x, y)
+        x = jx
+        y = jy
 
         return [x, y]
     }
-    draw3DLine(p1x, p1y, p1z, p2x, p2y, p2z, color, alpha){
+    draw3DLine(p1x, p1y, p1z, p2x, p2y, p2z, color, alpha, widthConstant){
         let zDifference1 = (p1z - this.camera.z)
         let zDifference2 = (p2z - this.camera.z)
 
@@ -255,7 +301,7 @@ class Play extends Phaser.Scene{
         let [projP1x, projP1y] = this.getProjectedCoords(p1x, p1y, planeOfViewSize1)
         let [projP2x, projP2y] = this.getProjectedCoords(p2x, p2y, planeOfViewSize2)
 
-        const width = this.widthConstant / (((p1z + p2z)/2 - this.camera.z) * fovScalingFactor)
+        const width = widthConstant / (((p1z + p2z)/2 - this.camera.z) * fovScalingFactor)
 
 
         if (width < this.minWidth){
@@ -267,6 +313,7 @@ class Play extends Phaser.Scene{
         }
 
         this.drawLinearLine(projP1x, projP1y, projP2x, projP2y, width, color, alpha)
+        // this.drawLinearLine(projP1x + 2, projP1y - 2, projP2x + 2, projP2y - 2, width, 0x1020ff, alpha)
     }
 
     // simple line
@@ -276,6 +323,8 @@ class Play extends Phaser.Scene{
         this.graphics.moveTo(projX1, projY1)
         this.graphics.lineTo(projX2, projY2)
         this.graphics.strokePath()
+
+        this.linesDrawn += 1 // debug
     }
 
 
@@ -298,11 +347,28 @@ class Play extends Phaser.Scene{
         // conect to make cube
         for(let i = 0; i < 4; i++){
             frontFace[i].addConnection(backFace[i])
+            backFace[i].addConnection(frontFace[i])
         }
 
         return [...frontFace, ...backFace]
 
     }
+
+    makePyramid(x, y, z, sizex, sizey, sizez){
+        let base = []
+        base.push(new Point(x, y, z))
+        base.push(new Point(x+sizex, y, z))
+        base.push(new Point(x+sizex/2, y, z+sizez))
+        this.connectPolygon(base)
+
+        let tip = new Point(x + sizex/2, y-sizey, z + sizez/2)
+        for(let i = 0; i < base.length; i++){
+            base[i].addConnection(tip)
+            tip.addConnection(base[i])
+        }
+        return[...base, tip]
+    }
+
     connectPolygon(points){
         for(let i = 0; i < points.length; i++){
             if (i === (points.length - 1)){
@@ -338,16 +404,67 @@ class Play extends Phaser.Scene{
     }
 
     drawPlayer(){
-        for(const tri of this.player.playerTris){
-            this.drawTriangle(tri[0], tri[1], tri[2], this.playerColor, this.playerAlpha)
+        for(const poly of this.player.playerPolys){
+            this.drawTriangle(poly[0], poly[1], poly[2], this.playerColor, this.playerAlpha)
         }
     }
 
+    /* horizontal lines */
+    drawFloor(){
+        const gridSize = 50
+        const numLines = 15
+        const floorY = 250
+        const gridColor = 0xFF00FF
+        const baseAlpha = 0.9
+
+        const startZ = Math.floor(this.camera.z / gridSize) * gridSize
+
+        for (let i = 0; i < numLines; i++) {
+            const z = startZ + (i * gridSize)
+            
+            if (z < this.camera.z + 10) continue
+
+            // calculate distance for fading
+            const dist = z - this.camera.z
+            
+            const fade = Math.max(0, 1 - (dist / (numLines * gridSize)))
+            
+            this.draw3DLine(
+                this.camera.x - 2000, floorY, z,
+                this.camera.x + 2000, floorY, z,
+                gridColor, baseAlpha * fade, this.widthConstant
+            )
+        }
+    }
     /*
     for smooth rotation, rotate based off of how much more it needs to rotate
     */
     rotatePlayer(targetAngle){
         const rotationLeft = targetAngle - this.player.rotation
         this.player.rotation += rotationLeft * this.rotationConst
+    }
+
+
+    // each pixel of lines flicker
+    applyJitterEffect(x, y){
+        if (this.jitterEffect){
+            if (Math.random() > 0.94) {
+                x += (Math.random() - 0.5) * 3
+                y += (Math.random() - 0.5) * 3
+            }
+        }
+        return [x, y]
+
+    }
+
+    // shakes the camera like when an explosion happens maybe
+    applyTurbulenceEffect(){
+        if (this.turbulenceEffect){
+            if ((this.frame) % 2 == 0){
+                const shakeMagnitude = 3
+                this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
+                this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
+            }        
+        }
     }
 }

@@ -7,17 +7,22 @@ Time Tracked:
     - refactoring player (30 min)
     - rotating player (60 min)
     - rotating smoothly (20 min)
-    - made and added 1:53 background music track (80 min)
-    - added ship engine noise and collect sfx (20 min)
-    - added spritesheet background by making an animation in blender, exporting the frames, 
+    - made and added 1:53 background music track (80 min) (bandlab)
+    - added ship engine noise and collect sfx (20 min) (https://jfxr.frozenfractal.com/) (freesound.org)
+    - added spritesheet background by making an animation in blender, exporting the frames, (see: https://www.youtube.com/watch?v=_J5okZLZzFY&list=LL&index=1&pp=gAQBiAQBsAgC)
         then using ImageMagick to create the spritesheet (https://imagemagick.org/index.php#gsc.tab=0), 
         made it move slightly when player moves for paralax type effect (100 min)
+    - started menu scene (10 min)
+    - added menu text, made a pyramid constructor, added jitter, trailblur, turbulence effects, added a floor to scene, deleted objects that pass behind the player for optimization
 */
 
 config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
+    render: { // https://tessl.io/registry/tessl/npm-phaser/3.90.0/files/docs/rendering.md
+        antialias: true,         // Enable anti-aliasing
+    },
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
@@ -34,16 +39,26 @@ let game = new Phaser.Game(config)
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
 
+let keyIncreaseBloomStrength, keyDecreaseBloomStrength, keyIncreaseBloomScale, keyDecreaseBloomScale
 
 /*
-need to fulful: Include one or more animated characters that use a texture atlas/sprite sheet* (1)
+
+performance looking okay so far at 60fps
+
+    would be fun to have gravity and only left right movement, but have orange circle collectables
+    that make your plane jump into the air until falling back down to collect more points or used to dodge
+
+jump? 
+up down control or just left right?
+could add vignette as sprite overlay
+change fov, and bganimation as level speeds up? (fov is already adjusted for that (cubes look elongated))
+
+lines move to the music?
+
+make player look better
+break animations: objects break into lines or polygons upon collision
 
 
-could animate a background or have an animation that grows in size to look 3d as it passes by (needs to be a small object for perspective reasons)
-
-animation with sprite sheet could be smoke trailing
-
-cound add a jump or just up and down control
 
 
 
