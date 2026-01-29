@@ -13,6 +13,22 @@ class Play extends Phaser.Scene{
         // game
         this.score = 0
 
+        let scoreConfig = {
+            fontFamily: 'Courier',
+            fontSize: '50px',
+            fontStyle: 'bold',
+            backgroundColor: '#F3B141',
+            color: '#843605',
+            align: 'right',
+            padding: {
+                top: 5,
+                bottom: 5,
+            },
+            fixedWidth: 0
+        }
+        // display menu text
+        this.add.text(game.config.width/2, 40, `Score ${this.score}`, scoreConfig).setOrigin(0.5)
+
         // effects
         this.jitterEffect = true
         this.turbulenceEffect = false
@@ -93,11 +109,29 @@ class Play extends Phaser.Scene{
         // collectables
         this.collectables = []
 
-        let pyramid1 = new Pyramid(0, 220, 500, 'normal')
-        let pyramid2 = new Pyramid(-50, 230, 500, 'normal')
-        let pyramid3 = new Pyramid(50, 240, 500, 'high')
-        this.collectables.push(pyramid1, pyramid2, pyramid3)
+        // generate the first batch
+        for (let i = 4; i < 20; i ++){
+            const pyramidX = this.helpers.gaussianRandom(0, 250)
+            const pyramidZ = this.player.z + i * 50
+            let pyramidType = 'normal'
+            let pyramidY = 240
+            
+            this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+        }
 
+        // obstacles
+        this.obstacles = []
+
+        // first batch
+        for (let i = 2; i < 5; i ++){
+            const obstacleX = this.helpers.gaussianRandom(0, 250)
+            const obstacleZ = this.player.z + i * 200
+            let obstacleType = 'medium'
+            let obstacleY = 215
+            
+            this.obstacles.push(new RectPrism(obstacleX, obstacleY, obstacleZ, obstacleType))
+        }
+        
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
         keyDOWN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
@@ -178,8 +212,9 @@ class Play extends Phaser.Scene{
         //////////////////////////////////////////////////////////////////////////////
 
         // generation
+        // collectables
         if(this.frame % 30 == 0){
-            const pyramidX = this.helpers.gaussianRandom(0, 250)
+            const pyramidX = 25 * Math.round(this.helpers.gaussianRandom(0, 250) / 25) // round to nearest 25
             const pyramidZ = this.player.z + 1000
             let pyramidY = 0
             let pyramidType = 'none'
@@ -194,6 +229,31 @@ class Play extends Phaser.Scene{
             }
 
             this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+        }
+        // obstacles
+        if(this.frame % 30 == 0){
+            if(Math.random() < 0.3){
+                const obyX = this.helpers.gaussianRandom(0, 250)
+                const obyZ = this.player.z + 1000
+                let obyY = 0
+                let obyType = 'none'
+
+                const rand = Math.random()
+                if(rand < 0.3){
+                    obyType = 'large'
+                    obyY = 200
+                }
+                else if(rand < 0.7){
+                    obyType = 'medium'
+                    obyY = 215
+                }
+                else{
+                    obyType = 'small'
+                    obyY = 225
+                }
+
+                this.obstacles.push(new RectPrism(obyX, obyY, obyZ, obyType))
+            }
         }
 
         //////////////////////////////////////////////////////////////////////////////
@@ -243,8 +303,9 @@ class Play extends Phaser.Scene{
         let seen = new Set()
 
         let collectablesToDraw = [...this.collectables]
+        let obstaclesToDraw = [...this.obstacles]
        
-
+        //collectables
         while (collectablesToDraw.length){
             // choose point
             const collectable = collectablesToDraw.pop()
@@ -254,6 +315,21 @@ class Play extends Phaser.Scene{
                 for(const conn of point.connections){
                     if (!seen.has(conn)){
                         this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, collectable.color, collectable.alpha, this.widthConstant * collectable.relativeWidth)
+                    }
+                }
+                seen.add(point)
+            }
+        }
+        //obstacles
+        while (obstaclesToDraw.length){
+            // choose point
+            const obstacle = obstaclesToDraw.pop()
+
+            for (const point of obstacle.points){
+                //draw line connections
+                for(const conn of point.connections){
+                    if (!seen.has(conn)){
+                        this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, obstacle.color, obstacle.alpha, this.widthConstant * obstacle.relativeWidth)
                     }
                 }
                 seen.add(point)
@@ -282,9 +358,31 @@ class Play extends Phaser.Scene{
             if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
                 if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
                     if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
-                            this.collect1.play() // audio
-                            this.score += this.collectables[i].pointValue
-                            this.collectables.splice(i, 1) // delete
+                        this.collect1.play() // audio
+                        this.score += this.collectables[i].pointValue
+                        this.collectables.splice(i, 1) // delete
+                    }
+                }
+            }
+        }
+
+        //obstacles
+        for (let i = 0; i < this.obstacles.length; i++){
+            if(this.obstacles[i].points.length === 0) continue
+
+            let [cx, cy, cz] = [this.obstacles[i].x, this.obstacles[i].y, this.obstacles[i].z]
+            let [sizeX, sizeY, sizeZ] = [this.obstacles[i].sizeX, this.obstacles[i].sizeY, this.obstacles[i].sizeZ]
+            //check if behind player
+            if (cz < (this.player.z - 100)){
+                this.obstacles.splice(i, 1) // delete
+                continue
+            }
+            // check all dimensions is order of relevance
+            // uses magic numbers for player hitbox
+            if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
+                if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
+                    if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
+                        console.log("You LOSE")
                     }
                 }
             }
@@ -373,34 +471,6 @@ class Play extends Phaser.Scene{
 
         this.linesDrawn += 1 // debug
     }
-
-
-    /* returns all connected points of a rect prism in an array*/
-    makeRectangularPrism(x, y, z, sizeX, sizeY, sizeZ){
-        let frontFace = []
-        frontFace.push(new Point(x+sizeX, y+sizeY, z))
-        frontFace.push(new Point(x+sizeX, y, z))
-        frontFace.push(new Point(x, y, z))
-        frontFace.push(new Point(x, y+sizeY, z))
-        this.helpers.connectPolygon(frontFace)
-
-        let backFace = []
-        backFace.push(new Point(x+sizeX, y+sizeY, z+sizeZ))
-        backFace.push(new Point(x+sizeX, y, z+sizeZ))
-        backFace.push(new Point(x, y, z+sizeZ))
-        backFace.push(new Point(x, y+sizeY, z+sizeZ))
-        this.helpers.connectPolygon(backFace)
-
-        // conect to make cube
-        for(let i = 0; i < 4; i++){
-            frontFace[i].addConnection(backFace[i])
-            backFace[i].addConnection(frontFace[i])
-        }
-
-        return [...frontFace, ...backFace]
-
-    }
-
     
     // draws and fills flat shape using list of points
     drawPoly(poly, color, alpha, fill) {
