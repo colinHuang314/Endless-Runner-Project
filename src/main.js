@@ -20,6 +20,8 @@ Time Tracked:
     - deleted objects that pass behind the player for optimization (5 min)
     - refactoring, player jump, load screen (45 min)
     - made player 3d (30 min)
+    ---------- 12 hr mark 1/28/2026 -------------
+    - added helper class, added pyramid class added random generation, refactored drawing loop, refactored collision
 */
 
 config = {

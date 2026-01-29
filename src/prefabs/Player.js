@@ -1,8 +1,8 @@
 class Player{
     constructor(x, y, z){
-        this.x = x
-        this.y = y
-        this.z = z
+        this.x = x // += 20 for wings
+        this.y = y // +- 2
+        this.z = z // +10 to -10
         this.playerPolys = [] // main component of player
         this.rotation = 0
 

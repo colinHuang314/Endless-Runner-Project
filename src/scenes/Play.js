@@ -7,7 +7,12 @@ class Play extends Phaser.Scene{
     }
     
     create(){
+        this.helpers = new Helpers()
         this.debug = true
+
+        // game
+        this.score = 0
+
         // effects
         this.jitterEffect = true
         this.turbulenceEffect = false
@@ -18,12 +23,15 @@ class Play extends Phaser.Scene{
 
         // audio
         this.music = this.sound.add('music', { 
-            volume: 0.5,
+            volume: 0.3,
             loop: true 
         })
-        this.shipNoise = this.sound.add('shipNoise', {volume: 2})
+        this.shipNoise = this.sound.add('shipNoise', {
+            volume: 2,
+            loop: true
+        })
         this.collect1 = this.sound.add('collect1', {volume: 1})
-        this.collect1 = this.sound.add('collect1', {volume: 1})
+        this.collect2 = this.sound.add('collect2', {volume: 1})
 
         this.music.play()
         this.shipNoise.play()
@@ -57,13 +65,14 @@ class Play extends Phaser.Scene{
 
             
         // camera
-        this.camera = new Camera(0, 0, -150, 140)
+        this.camera = new Camera(0, 0, -500, 140)
 
         //camera physics
         this.followConst = 0.1
 
 
         // player
+        this.crashed = false
         this.playerColor = 0x0000c0
         this.playerAlpha = 0.6
         this.playerLineColor = 0x7777ff
@@ -83,16 +92,11 @@ class Play extends Phaser.Scene{
 
         // collectables
         this.collectables = []
-        this.collectableColor = 0xff47a6
-        this.collectableAlpha = 1
-        this.cube1 = this.makeRectangularPrism(-50, -50, 0, 50, 50, 50)
-        this.cube2 = this.makeRectangularPrism(-150, -50, 400, 50, 50, 50)
-        this.cube3 = this.makeRectangularPrism(-50, -50, 800, 50, 50, 50)
-        this.cube4 = this.makeRectangularPrism(-150, -50, 1200, 50, 50, 50)
-        this.cube5 = this.makeRectangularPrism(-250, -50, 1600, 50, 50, 50)
-        this.pyramid1 = this.makePyramid(0, 0, 500, 25, 25, 20)
 
-        this.collectables.push(this.cube1, this.cube2, this.cube3, this.cube4, this.cube5, this.pyramid1)
+        let pyramid1 = new Pyramid(0, 220, 500, 'normal')
+        let pyramid2 = new Pyramid(-50, 230, 500, 'normal')
+        let pyramid3 = new Pyramid(50, 240, 500, 'high')
+        this.collectables.push(pyramid1, pyramid2, pyramid3)
 
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
@@ -111,14 +115,15 @@ class Play extends Phaser.Scene{
     update() {
         const startTime = performance.now()
         
-        // left/right control
+        let playerMovementVector = new Phaser.Math.Vector2(0, 0)
+
         if (keyRIGHT.isDown) {
-            this.player.x += 2
+            playerMovementVector.x += 2
             this.rotatePlayer(-this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
         else if (keyLEFT.isDown) {
-            this.player.x -= 2
+            playerMovementVector.x -= 2
             this.rotatePlayer(this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
@@ -130,10 +135,10 @@ class Play extends Phaser.Scene{
         // jump
         if (Phaser.Input.Keyboard.JustDown(keyUP)) {
             this.yVelocity -= this.jumpStrength
-            this.grounded = false
-            this.shipNoise.setVolume(4)
-            
+            this.grounded = false            
         }
+        if (!this.grounded) this.shipNoise.setVolume(4)
+
 
         this.applyGravity()
         
@@ -155,8 +160,13 @@ class Play extends Phaser.Scene{
         }
 
         // forward movememt
-        this.player.z += this.playerSpeed
-        this.player.makePlayer() // update points
+        playerMovementVector.y += this.playerSpeed // the .y is actually z
+
+        // move player
+        this.player.x += playerMovementVector.x
+        this.player.z += playerMovementVector.y
+        // update player points
+        this.player.makePlayer()
 
         // camera follow
         this.camera.follow(this.player.x, this.player.y - 20, this.player.z - 20, this.followConst)
@@ -166,6 +176,30 @@ class Play extends Phaser.Scene{
 
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
+
+        // generation
+        if(this.frame % 30 == 0){
+            const pyramidX = this.helpers.gaussianRandom(0, 250)
+            const pyramidZ = this.player.z + 1000
+            let pyramidY = 0
+            let pyramidType = 'none'
+
+            if(Math.random() < 0.25){
+                pyramidType = 'high'
+                pyramidY = 0
+            }
+            else{
+                pyramidType = 'normal'
+                pyramidY = 240
+            }
+
+            this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+        }
+
+        //////////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////////
+
+
         // small paralax effect
         this.bgAnimation.x = this.bgCenter[0] - this.camera.x * this.bgParalax
         this.bgAnimation.y = this.bgCenter[1] - this.camera.y * this.bgParalax
@@ -194,7 +228,7 @@ class Play extends Phaser.Scene{
 
         this.frame += 1
         if (this.debug && this.frame % (10) == 0){
-            console.log(`Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
+            console.log(`Score: ${this.score} | Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
             if (this.frame >= this.fps) this.frame = 0 // reset
         }
     }
@@ -205,62 +239,51 @@ class Play extends Phaser.Scene{
         // floor
         this.drawFloor()
 
-        // draw lines
+        // draw objects
         let seen = new Set()
 
-        let queue = []
-        for (const item of this.collectables){
-            // add all points of collectables
-            queue.push(...item)
-        }
-        // queue.sort((a, b) => b.z - a.z)
+        let collectablesToDraw = [...this.collectables]
+       
 
-        while (queue.length){
+        while (collectablesToDraw.length){
             // choose point
-            const point = queue.pop()
-            // console.log(String(point))
+            const collectable = collectablesToDraw.pop()
 
-            //draw line connections
-            
-            for(const conn of point.connections){
-                if (!seen.has(conn)){
-                    this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, this.collectableColor, this.collectableAlpha, this.widthConstant)
+            for (const point of collectable.points){
+                //draw line connections
+                for(const conn of point.connections){
+                    if (!seen.has(conn)){
+                        this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, collectable.color, collectable.alpha, this.widthConstant * collectable.relativeWidth)
+                    }
                 }
-
+                seen.add(point)
             }
-            seen.add(point)
-            
         }
 
         // draw player
         this.drawPlayer()
-
-        
-        
     }
     
     /*collision between player and collectables or obstacles */
-    // need to refactor
-    // add player wing in hitbox
     checkCollision(){
-        const pc = this.player.playerCenter
-
+        // collectables
         for (let i = 0; i < this.collectables.length; i++){
-            if(this.collectables[i].length === 0) continue
+            if(this.collectables[i].points.length === 0) continue
 
-            let [cx, cy, cz] = [this.collectables[i][2].x, this.collectables[i][2].y, this.collectables[i][2].z] // refactor
-            const size = 50 // need to refactor
-
-            //check if behind camera
-            if (cz < (this.camera.z - 100)){
+            let [cx, cy, cz] = [this.collectables[i].x, this.collectables[i].y, this.collectables[i].z]
+            let [sizeX, sizeY, sizeZ] = [this.collectables[i].sizeX, this.collectables[i].sizeY, this.collectables[i].sizeZ]
+            //check if behind player
+            if (cz < (this.player.z - 100)){
                 this.collectables.splice(i, 1) // delete
                 continue
             }
-            // check z first for speed
-            if (pc.z > cz && pc.z < cz + size){
-                if (pc.y > cy && pc.y < cy + size){
-                    if (pc.x > cx && pc.x < cx + size){
+            // check all dimensions is order of relevance
+            // uses magic numbers for player hitbox
+            if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
+                if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
+                    if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
                             this.collect1.play() // audio
+                            this.score += this.collectables[i].pointValue
                             this.collectables.splice(i, 1) // delete
                     }
                 }
@@ -353,20 +376,20 @@ class Play extends Phaser.Scene{
 
 
     /* returns all connected points of a rect prism in an array*/
-    makeRectangularPrism(x, y, z, sizex, sizey, sizez){
+    makeRectangularPrism(x, y, z, sizeX, sizeY, sizeZ){
         let frontFace = []
-        frontFace.push(new Point(x+sizex, y+sizey, z))
-        frontFace.push(new Point(x+sizex, y, z))
+        frontFace.push(new Point(x+sizeX, y+sizeY, z))
+        frontFace.push(new Point(x+sizeX, y, z))
         frontFace.push(new Point(x, y, z))
-        frontFace.push(new Point(x, y+sizey, z))
-        this.connectPolygon(frontFace)
+        frontFace.push(new Point(x, y+sizeY, z))
+        this.helpers.connectPolygon(frontFace)
 
         let backFace = []
-        backFace.push(new Point(x+sizex, y+sizey, z+sizez))
-        backFace.push(new Point(x+sizex, y, z+sizez))
-        backFace.push(new Point(x, y, z+sizez))
-        backFace.push(new Point(x, y+sizey, z+sizez))
-        this.connectPolygon(backFace)
+        backFace.push(new Point(x+sizeX, y+sizeY, z+sizeZ))
+        backFace.push(new Point(x+sizeX, y, z+sizeZ))
+        backFace.push(new Point(x, y, z+sizeZ))
+        backFace.push(new Point(x, y+sizeY, z+sizeZ))
+        this.helpers.connectPolygon(backFace)
 
         // conect to make cube
         for(let i = 0; i < 4; i++){
@@ -378,34 +401,7 @@ class Play extends Phaser.Scene{
 
     }
 
-    makePyramid(x, y, z, sizex, sizey, sizez){
-        let base = []
-        base.push(new Point(x, y, z))
-        base.push(new Point(x+sizex, y, z))
-        base.push(new Point(x+sizex/2, y, z+sizez))
-        this.connectPolygon(base)
-
-        let tip = new Point(x + sizex/2, y-sizey, z + sizez/2)
-        for(let i = 0; i < base.length; i++){
-            base[i].addConnection(tip)
-            tip.addConnection(base[i])
-        }
-        return[...base, tip]
-    }
-
-    connectPolygon(points){
-        for(let i = 0; i < points.length; i++){
-            if (i === (points.length - 1)){
-                points[i].addConnection(points[0])
-                points[0].addConnection(points[i])
-            }
-            else{
-                points[i].addConnection(points[i+1])
-                points[i+1].addConnection(points[i])
-            }
-        }
-    }
-
+    
     // draws and fills flat shape using list of points
     drawPoly(poly, color, alpha, fill) {
         if(poly.length <= 1) return
