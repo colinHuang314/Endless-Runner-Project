@@ -406,8 +406,8 @@ class Play extends Phaser.Scene{
         }
     }
 
-
-    drawPoly(poly, color, alpha) {
+    // draws and fills flat shape using list of points
+    drawPoly(poly, color, alpha, fill) {
         if(poly.length <= 1) return
         const fovScalingFactor = 2 * Math.tan((this.camera.fov/2) * Math.PI / 180)
 
@@ -427,13 +427,13 @@ class Play extends Phaser.Scene{
         }        
 
         this.graphics.closePath()
-        this.graphics.fillPath()    
+        if(fill) this.graphics.fillPath()
         this.graphics.strokePath()
     }
 
     drawPlayer(){
         for(const poly of this.player.playerPolys){
-            this.drawPoly(poly, this.playerColor, this.playerAlpha)
+            this.drawPoly(poly, this.playerColor, this.playerAlpha, true)
         }
     }
 

@@ -18,7 +18,8 @@ Time Tracked:
     - added jitter, trailblur, turbulence effects (60 min)
     - added a floor to scene (40 min)
     - deleted objects that pass behind the player for optimization (5 min)
-    - refactoring, player jump, load screen
+    - refactoring, player jump, load screen (45 min)
+    - made player 3d (30 min)
 */
 
 config = {
