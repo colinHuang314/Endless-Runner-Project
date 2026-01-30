@@ -1,7 +1,13 @@
 /*
 Name: Colin Huang
 
-Time Tracked:
+Game Title: Galaxy Cruiser
+
+Creative Tilt:
+    Technical aspect: I made my own 3d renderer for simple lines in 3d space and a camera that follows the player
+    Visual style: I made my own sound track and also chose a cool neon lines style with motion blur
+
+Time Tracked (total: ):
     - basic 3d renderer (150 min)
     - drawing player and aligning with camera (60 min)
     - refactoring player (30 min)
@@ -21,8 +27,9 @@ Time Tracked:
     - refactoring, player jump, load screen (45 min)
     - made player 3d (30 min)
     ---------- 12 hr mark 1/28/2026 -------------
-    - added helper class, added pyramid class added random generation, refactored drawing loop, refactored collision
-    - added crash sound and gameover scene
+    - added helper class, added pyramid class added random generation, refactored drawing loop, refactored collision (90 min)
+    - added crash sound and gameover scene (60 min)
+    - added jump and select sounds, changed some text display, refactored the drawing loop (45 min)
 */
 
 config = {
@@ -46,6 +53,7 @@ config = {
 
 let game = new Phaser.Game(config)
 
+let highScore = 0
 let fps = game.config.fps.target
 
 let keyUP, keyDOWN, keyRIGHT, keyLEFT, keySPACE, keySHIFT, keyIncreaseFov, keyDecreaseFov
@@ -74,15 +82,15 @@ break animations: objects break into lines or polygons upon collision
 
 
 Use multiple Scene classes (dictated by your game's style) (1)
-    load, menu, play, credits, game over on top of play
+    lDONE
 Properly transition between Scenes and allow the player to restart w/out having to reload the page (1)
-    like in rocket patrol
+    DONE
 Include in-game instructions using text or other means (e.g., tooltips, tutorial, diagram, etc.) (1)
-    like in rp
+    DONE
 Have some form of player input/control appropriate to your game design (1)
     DONE
 Include one or more animated characters that use a texture atlas/sprite sheet* (1)
-    background counts as character???
+    DONE
 Simulate scrolling with a tileSprite (or equivalent means) (1)
     DONE
 Implement proper collision detection (via Arcade Physics or a custom routine) (1)
@@ -90,13 +98,13 @@ Implement proper collision detection (via Arcade Physics or a custom routine) (1
 Have looping background music* (1)
     DONE
 Use a minimum of four sound effects for key mechanics, UI, and/or significant events appropriate to your game design (1)
-    buttonClick, collect, die, ship movement(subtle, might want to re-do)
+    DONE  (buttonClick, collect, crash, ship movement)
 Use randomness to generate escalating challenge, e.g. terrain, pickups, etc. (1)
     to-do
 Include some metric of accomplishment that a player can improve over time, e.g., score, survival time, etc. (1)
-    time + collected
+    DONE
 Be theoretically endless (1)
-    to-do
+    DONE
 Be playable for at least 15 seconds for a new player of low to moderate skill (1)
     to-do
 Run without significant crashes or errors (1)

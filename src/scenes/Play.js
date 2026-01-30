@@ -32,8 +32,12 @@ class Play extends Phaser.Scene{
             },
             fixedWidth: 0
         }
-        // display menu text
-        this.scoreText = this.add.text(game.config.width/2, 40, `Score ${this.score}`, scoreConfig).setOrigin(0.5)
+        // score display
+        this.scoreText = this.add.text(game.config.width/2, 40, `Score: ${this.score}`, scoreConfig).setOrigin(0.5)
+        scoreConfig.backgroundColor = '#b300bd'
+        scoreConfig.color = '#000000'
+        scoreConfig.fontSize = '30px'
+        this.highScoreText = this.add.text(game.config.width - 120, 30, `High: ${highScore}`, scoreConfig).setOrigin(0.5)
 
         // audio
         this.music = this.sound.add('music', { 
@@ -47,6 +51,7 @@ class Play extends Phaser.Scene{
         this.collect1 = this.sound.add('collect1', {volume: 1})
         this.collect2 = this.sound.add('collect2', {volume: 1})
         this.crash = this.sound.add('crash', {volume: 1})
+        this.jump = this.sound.add('jumpSound', {volume: 1})
 
         this.music.play()
         this.shipNoise.play()
@@ -171,6 +176,7 @@ class Play extends Phaser.Scene{
         
         // jump
         if (this.grounded && (!this.crashed) && Phaser.Input.Keyboard.JustDown(keyUP)) {
+            this.jump.play()
             this.yVelocity -= this.jumpStrength
             this.grounded = false            
         }
@@ -230,7 +236,8 @@ class Play extends Phaser.Scene{
         // collision
         this.checkCollision()
 
-        this.scoreText.text = `Score ${this.score}`
+        this.scoreText.text = `Score: ${this.score}`
+        this.highScoreText.text = `High: ${highScore}`
 
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
@@ -330,34 +337,25 @@ class Play extends Phaser.Scene{
         // draw objects
         let seen = new Set()
 
-        let collectablesToDraw = [...this.collectables]
-        let obstaclesToDraw = [...this.obstacles]
-       
+        let objectsToDraw = [...this.collectables, ...this.obstacles]
+        
+        // sort in increasing order to draw in perspective
+        /*https://stackoverflow.com/questions/1063007/how-to-sort-an-array-of-integers */
+        objectsToDraw.sort(function(a, b) {
+            return a.z - b.z;
+        })
+
         //collectables
-        while (collectablesToDraw.length){
+        while (objectsToDraw.length){
             // choose point
-            const collectable = collectablesToDraw.pop()
+            const object = objectsToDraw.pop()
 
-            for (const point of collectable.points){
+            for (const point of object.points){
                 //draw line connections
                 for(const conn of point.connections){
                     if (!seen.has(conn)){
-                        this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, collectable.color, collectable.alpha, this.widthConstant * collectable.relativeWidth)
-                    }
-                }
-                seen.add(point)
-            }
-        }
-        //obstacles
-        while (obstaclesToDraw.length){
-            // choose point
-            const obstacle = obstaclesToDraw.pop()
-
-            for (const point of obstacle.points){
-                //draw line connections
-                for(const conn of point.connections){
-                    if (!seen.has(conn)){
-                        this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, obstacle.color, obstacle.alpha, this.widthConstant * obstacle.relativeWidth)
+                        // both objects need the same variable names of color, alpha, relativeWidth
+                        this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, object.color, object.alpha, this.widthConstant * object.relativeWidth)
                     }
                 }
                 seen.add(point)
@@ -393,6 +391,12 @@ class Play extends Phaser.Scene{
                             this.collect1.play() // sfx
                         }
                         this.score += this.collectables[i].pointValue
+
+                        // update highscore
+                        if (this.score > highScore){
+                            highScore = this.score
+                        }
+
                         this.collectables.splice(i, 1) // delete
                     }
                 }
@@ -421,6 +425,9 @@ class Play extends Phaser.Scene{
 
                             this.music.stop()
                             this.shakeEffect = true
+                            this.playerColor = 0xcc0000
+                            this.playerAlpha = 0.3
+                            this.playerLineColor = 0xff0000
                             console.log("CRASHED")
                         }
                     }
