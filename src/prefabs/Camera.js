@@ -8,8 +8,8 @@ class Camera {
 
     follow(xTarget, yTarget, zTarget, followConst){
         this.x += (xTarget - this.x) * followConst * 1.5
-        this.y += (yTarget - this.y) * followConst * 2
-        this.z += (zTarget - this.z) * followConst
+        this.y += (yTarget - this.y) * followConst * 2.5
+        this.z += (zTarget - this.z) * followConst * 2
     }
 
     toString() {

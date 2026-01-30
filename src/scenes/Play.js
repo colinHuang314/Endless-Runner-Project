@@ -12,6 +12,9 @@ class Play extends Phaser.Scene{
 
         // game
         this.score = 0
+        this.obstacleSpawnChance = 0.1
+        this.collectableSpawnChance = 0.33
+        this.canJump = true
 
         // effects
         this.jitterEffect = true
@@ -38,6 +41,10 @@ class Play extends Phaser.Scene{
         scoreConfig.color = '#000000'
         scoreConfig.fontSize = '30px'
         this.highScoreText = this.add.text(game.config.width - 120, 30, `High: ${highScore}`, scoreConfig).setOrigin(0.5)
+        scoreConfig.backgroundColor = '#ff8c00'
+        scoreConfig.color = '#000000'
+        scoreConfig.fontSize = '26px'
+        this.canJumpText = this.add.text(110, 35, `Jump: ${this.canJump}`, scoreConfig).setOrigin(0.5)
 
         // audio
         this.music = this.sound.add('music', { 
@@ -52,6 +59,7 @@ class Play extends Phaser.Scene{
         this.collect2 = this.sound.add('collect2', {volume: 1})
         this.crash = this.sound.add('crash', {volume: 1})
         this.jump = this.sound.add('jumpSound', {volume: 1})
+        this.speedUp = this.sound.add('speedUpSound', {volume: 1})
 
         this.music.play()
         this.shipNoise.play()
@@ -87,7 +95,7 @@ class Play extends Phaser.Scene{
 
             
         // camera
-        this.camera = new Camera(20, 0, -500, 140)
+        this.camera = new Camera(20, -200, -500, 140)
 
         //camera physics
         this.followConst = 0.1
@@ -107,7 +115,7 @@ class Play extends Phaser.Scene{
         this.rotationConst = 0.1
         this.maxTurnAngle = 30
         
-        this.jumpStrength = 8
+        this.jumpStrength = 7.75
         this.gravityConst = 0.2
         this.yVelocity = 2 // could put in player
         this.grounded = false
@@ -117,7 +125,7 @@ class Play extends Phaser.Scene{
 
         // generate the first batch
         for (let i = 4; i < 20; i ++){
-            const pyramidX = this.helpers.gaussianRandom(0, 250)
+            const pyramidX = this.helpers.gaussianRandom(0, 220)
             const pyramidZ = this.player.z + i * 50
             let pyramidType = 'normal'
             let pyramidY = 240
@@ -125,12 +133,40 @@ class Play extends Phaser.Scene{
             this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
         }
 
+        //increase difficulty event
+        this.time.addEvent({
+            delay: 11000,
+            loop: true,
+            callback: () => {
+                if(!this.crashed){
+                    this.speedUp.play()
+
+                    if (this.camera.fov < 142) this.camera.fov += 0.6
+                    if (this.obstacleSpawnChance < 1) this.obstacleSpawnChance += 0.07
+                    if (this.collectableSpawnChance < 1) this.collectableSpawnChance += 0.05
+
+                    this.playerSpeed += 0.28
+                    console.log(`speed Up fov:${this.camera.fov} | osc: ${this.obstacleSpawnChance} | csc ${this.collectableSpawnChance} |  player speed ${this.playerSpeed}`)
+                }
+            }
+        })
+
+
         // obstacles
         this.obstacles = []
+        this.barriers = []
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 250, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 250, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 500, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 500, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 750, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 750, 'barrier'))
 
         // first batch
         for (let i = 2; i < 5; i ++){
-            const obstacleX = this.helpers.gaussianRandom(0, 250)
+            const obstacleX = this.helpers.gaussianRandom(0, 220)
             const obstacleZ = this.player.z + i * 200
             let obstacleType = 'medium'
             let obstacleY = 215
@@ -175,10 +211,11 @@ class Play extends Phaser.Scene{
         
         
         // jump
-        if (this.grounded && (!this.crashed) && Phaser.Input.Keyboard.JustDown(keyUP)) {
+        if (this.grounded && (!this.crashed) && this.canJump && Phaser.Input.Keyboard.JustDown(keyUP)) {
             this.jump.play()
             this.yVelocity -= this.jumpStrength
-            this.grounded = false            
+            this.grounded = false
+            this.canJump = false
         }
         if (!this.grounded) this.shipNoise.setVolume(4)
 
@@ -190,7 +227,6 @@ class Play extends Phaser.Scene{
             if(this.playerSpeed < 0.01){
                 this.bgAnimation.anims.stop()
             }
-            else this.bgAnimation.anims.msPerFrame = 1000/60 * 2 / this.playerSpeed
 
 
         }
@@ -218,6 +254,12 @@ class Play extends Phaser.Scene{
             this.shipNoise.setVolume(2)
 
         }
+        // left righ restriction
+        if(this.player.x < -500){
+            this.player.x = -500
+        }else if(this.player.x > 500){
+            this.player.x = 500
+        }
 
         // forward movememt
         playerMovementVector.y += this.playerSpeed // the .y is actually z
@@ -236,49 +278,73 @@ class Play extends Phaser.Scene{
         // collision
         this.checkCollision()
 
+        // change animation speed
+        this.bgAnimation.anims.msPerFrame = 1000/60 * 2 / Math.sqrt(this.playerSpeed)
+
+
         this.scoreText.text = `Score: ${this.score}`
         this.highScoreText.text = `High: ${highScore}`
+        this.canJumpText.text = `Jump: ${this.canJump ? "Charged" : "Empty"}`
+        if (!this.canJump){
+            this.canJumpText.setStyle({ backgroundColor: '#ff0000' })
+        } else{
+            this.canJumpText.setStyle({ backgroundColor: '#00ff00' })
+        }
 
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
 
         // generation
+        //barriers
+        if(this.barriers.length < 8){
+            this.barriers.push(new RectPrism(-515, 125, this.player.z + 750, 'barrier'))
+            this.barriers.push(new RectPrism(485, 125, this.player.z + 750, 'barrier'))
+        }
         // collectables
-        if(this.frame % 30 == 0){
-            const pyramidX = 25 * Math.round(this.helpers.gaussianRandom(0, 250) / 25) // round to nearest 25
-            const pyramidZ = this.player.z + 1000
-            let pyramidY = 0
-            let pyramidType = 'none'
+        if(this.frame % 10 == 0){
+            if (Math.random() < this.collectableSpawnChance){
+                let pyramidX = 25 * Math.round(this.helpers.gaussianRandom(0, 220) / 25) // round to nearest 25
+                if (pyramidX < -490) pyramidX = -490
+                else if (pyramidX > 465) pyramidX = 465
+                const pyramidZ = this.player.z + 1000
+                let pyramidY = 0
+                let pyramidType = 'none' 
 
-            if(Math.random() < 0.25){
-                pyramidType = 'high'
-                pyramidY = 100
-            }
-            else{
-                pyramidType = 'normal'
-                pyramidY = 240
-            }
+                if(Math.random() < 0.20){
+                    pyramidType = 'high'
+                    pyramidY = 100
+                }
+                else{
+                    pyramidType = 'normal'
+                    pyramidY = 240
+                }
 
-            this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+                this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+            }
         }
         // obstacles
-        if(this.frame % 30 == 0){
-            if(Math.random() < 0.3){
-                const obyX = this.helpers.gaussianRandom(0, 250)
+        if(this.frame % 10 == 0){
+            if(Math.random() < this.obstacleSpawnChance){
+                const obyX = (Math.random() - 0.5) * 1000 - 15
+                // const obyX = this.helpers.gaussianRandom(0, 220)
                 const obyZ = this.player.z + 1000
                 let obyY = 0
                 let obyType = 'none'
 
                 const rand = Math.random()
-                if (rand < 0.1){
-                    obyType = 'short wall'
+                if (rand < 0.07){
+                    obyType = 'long wall'
                     obyY = 220
                 }
-                else if(rand < 0.3){
+                else if (rand < 0.15){
+                    obyType = 'wide wall'
+                    obyY = 220
+                }
+                else if(rand < 0.2){
                     obyType = 'large'
                     obyY = 200
                 }
-                else if(rand < 0.7){
+                else if(rand < 0.8){
                     obyType = 'medium'
                     obyY = 215
                 }
@@ -290,6 +356,8 @@ class Play extends Phaser.Scene{
                 this.obstacles.push(new RectPrism(obyX, obyY, obyZ, obyType))
             }
         }
+
+
 
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
@@ -337,12 +405,12 @@ class Play extends Phaser.Scene{
         // draw objects
         let seen = new Set()
 
-        let objectsToDraw = [...this.collectables, ...this.obstacles]
+        let objectsToDraw = [...this.collectables, ...this.obstacles, ...this.barriers]
         
         // sort in increasing order to draw in perspective
         /*https://stackoverflow.com/questions/1063007/how-to-sort-an-array-of-integers */
         objectsToDraw.sort(function(a, b) {
-            return a.z - b.z;
+            return (a.z + a.sizeZ/2) - (b.z + b.sizeZ/2);
         })
 
         //collectables
@@ -397,6 +465,7 @@ class Play extends Phaser.Scene{
                             highScore = this.score
                         }
 
+                        this.canJump = true
                         this.collectables.splice(i, 1) // delete
                     }
                 }
@@ -411,8 +480,40 @@ class Play extends Phaser.Scene{
                 let [cx, cy, cz] = [this.obstacles[i].x, this.obstacles[i].y, this.obstacles[i].z]
                 let [sizeX, sizeY, sizeZ] = [this.obstacles[i].sizeX, this.obstacles[i].sizeY, this.obstacles[i].sizeZ]
                 //check if behind player
-                if (cz < (this.player.z - 100)){
+                if (cz < (this.player.z - 300)){
                     this.obstacles.splice(i, 1) // delete
+                    continue
+                }
+                // check all dimensions is order of relevance
+                // uses magic numbers for player hitbox
+                if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
+                    if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
+                        if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
+                            this.crash.play()
+                            this.crashed = true
+
+                            this.music.stop()
+                            this.shakeEffect = true
+                            this.playerColor = 0xcc0000
+                            this.playerAlpha = 0.3
+                            this.playerLineColor = 0xff0000
+                            console.log("CRASHED")
+                        }
+                    }
+                }
+            }
+        }
+
+        // barriers
+        if (!this.crashed){
+            for (let i = 0; i < this.barriers.length; i++){
+                if(this.barriers[i].points.length === 0) continue
+
+                let [cx, cy, cz] = [this.barriers[i].x, this.barriers[i].y, this.barriers[i].z]
+                let [sizeX, sizeY, sizeZ] = [this.barriers[i].sizeX, this.barriers[i].sizeY, this.barriers[i].sizeZ]
+                //check if behind player
+                if (cz < (this.player.z - 250)){
+                    this.barriers.splice(i, 1) // delete
                     continue
                 }
                 // check all dimensions is order of relevance
@@ -501,7 +602,7 @@ class Play extends Phaser.Scene{
         }
 
         if (width > this.maxWidth){
-            alpha /= 2
+            alpha /= 3
         }
 
         this.drawLinearLine(projP1x, projP1y, projP2x, projP2y, width, color, alpha)

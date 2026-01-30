@@ -24,6 +24,7 @@ class Load extends Phaser.Scene {
         this.load.audio('crash', './assets/crash.wav')
         this.load.audio('selectSound', './assets/selectSound.wav')
         this.load.audio('jumpSound', './assets/jumpSound.wav')
+        this.load.audio('speedUpSound', './assets/speedUpSound.wav')
         
         // spritesheet background
         this.load.spritesheet('bgAnim', './assets/starsSpritesheet.png', {

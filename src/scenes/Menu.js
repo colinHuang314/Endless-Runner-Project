@@ -40,10 +40,10 @@ class Menu extends Phaser.Scene{
         // display menu text
         menuConfig.fontSize = '80px'
         this.add.text(game.config.width/2, 128, 'Galaxy Cruiser', menuConfig).setOrigin(0.5)
-        menuConfig.fontSize = '28px'
+        menuConfig.fontSize = '25px'
         this.add.text(game.config.width/2, game.config.height/2 - 40, 'Use ←→ arrows to move and ↑ to jump', menuConfig).setOrigin(0.5)
         menuConfig.backgroundColor = '#ff47a6'
-        this.add.text(game.config.width/2, game.config.height/2 + 0, 'Collect Pyramids for points', menuConfig).setOrigin(0.5)
+        this.add.text(game.config.width/2, game.config.height/2 + 0, 'Collect Pyramids for points and to charge your jump', menuConfig).setOrigin(0.5)
         menuConfig.backgroundColor = '#FF0000'
         this.add.text(game.config.width/2, game.config.height/2 + 40, 'Dont hit RED!', menuConfig).setOrigin(0.5)
         menuConfig.backgroundColor = '#00FF00'

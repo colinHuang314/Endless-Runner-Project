@@ -6,8 +6,24 @@ class RectPrism{
         this.z = z
         this.type = type
 
-        if (type === 'short wall'){
-            this.sizeX = 200
+        if (type === 'barrier'){
+            this.sizeX = 20
+            this.sizeY = 150
+            this.sizeZ = 250
+            this.color = 0xff0000
+            this.alpha = 1
+            this.relativeWidth = 4
+        }
+        else if (type === 'long wall'){
+            this.sizeX = 30
+            this.sizeY = 35
+            this.sizeZ = 180
+            this.color = 0xff0000
+            this.alpha = 1
+            this.relativeWidth = 4
+        }
+        else if (type === 'wide wall'){
+            this.sizeX = 220
             this.sizeY = 35
             this.sizeZ = 30
             this.color = 0xff0000
@@ -15,26 +31,26 @@ class RectPrism{
             this.relativeWidth = 4
         }
         else if(type === 'large'){
-            this.sizeX = 50
+            this.sizeX = 55
             this.sizeY = 50
-            this.sizeZ = 50
+            this.sizeZ = 55
             this.color = 0xff0000
             this.alpha = 1
             this.relativeWidth = 4
         }
         else if(type === 'medium'){
-            this.sizeX = 40
+            this.sizeX = 45
             this.sizeY = 40
-            this.sizeZ = 40
-            this.color = 0xff1212
+            this.sizeZ = 45
+            this.color = 0xff0000
             this.alpha = 1
             this.relativeWidth = 3
         }
         else{
-            this.sizeX = 30
+            this.sizeX = 35
             this.sizeY = 30
-            this.sizeZ = 30
-            this.color = 0xff2929
+            this.sizeZ = 35
+            this.color = 0xff0000
             this.alpha = 1
             this.relativeWidth = 3
         }
