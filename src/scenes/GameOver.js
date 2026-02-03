@@ -23,13 +23,13 @@ class GameOver extends Phaser.Scene{
     update() {
         // text grows
         if (this.gameOverText.scale < 1){ 
-            this.gameOverText.setScale(this.gameOverText.scale * 1.09)
+            this.gameOverText.setScale(this.gameOverText.scale * Math.pow(1.09, 60/fps))
         }
         else{
             this.inputReady = true
         }
         
-        if (this.optionsText.y > 320) this.optionsText.y -= 10
+        if (this.optionsText.y > 320) this.optionsText.y -= 10 * (60/fps)
         
         if(this.inputReady){
             if (Phaser.Input.Keyboard.JustDown(keyLEFT)) {  

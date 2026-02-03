@@ -3,7 +3,7 @@ class Play extends Phaser.Scene{
         super("playScene")
     }
     
-    create(){
+    init(){
         this.helpers = new Helpers()
         this.debug = true
 
@@ -12,7 +12,7 @@ class Play extends Phaser.Scene{
 
         // game
         this.score = 0
-        this.obstacleSpawnChance = 0.1
+        this.obstacleSpawnChance = 0.05
         this.collectableSpawnChance = 0.33
         this.canJump = true
 
@@ -21,7 +21,42 @@ class Play extends Phaser.Scene{
         this.shakeEffect = false
         this.trailBlurEffect = true
 
+        // draw
+        this.seen = new Set()
+        this.objectsToDraw = []
 
+        // render consts
+        this.widthConstant = 1600
+        this.minWidth = 0.4  // acts like render distance too
+        this.maxWidth = 50   //makes close objects transparent
+
+            
+        // camera
+        this.camera = new Camera(20, -200, -500, 140)
+        //camera physics
+        this.followConst = 0.25
+
+
+        // player
+        this.crashed = false
+        this.playerColor = 0x0000c0
+        this.playerAlpha = 0.6
+        this.playerLineColor = 0x7777ff
+        this.playerLineAlpha = 1
+        this.playerLineWidth = 2
+        this.player = new Player(20, 20, -120)
+        // player physics
+        this.playerMovementVector = new Phaser.Math.Vector2(0, 0)
+        this.playerSpeed = 5
+        this.rotationConst = 0.25
+        this.maxTurnAngle = 30
+        this.jumpStrength = 15.6
+        this.gravityConst = 0.7
+        this.yVelocity = 5 // could put in player
+        this.grounded = false
+
+    }
+    create(){
         let scoreConfig = {
             fontFamily: 'Courier',
             fontSize: '50px',
@@ -87,39 +122,6 @@ class Play extends Phaser.Scene{
             this.graphics = this.add.graphics()
         }
 
-
-        // render consts
-        this.widthConstant = 1600
-        this.minWidth = 0.4  // acts like render distance too
-        this.maxWidth = 50   //makes close objects transparent
-
-            
-        // camera
-        this.camera = new Camera(20, -200, -500, 140)
-
-        //camera physics
-        this.followConst = 0.1
-
-
-        // player
-        this.crashed = false
-        this.playerColor = 0x0000c0
-        this.playerAlpha = 0.6
-        this.playerLineColor = 0x7777ff
-        this.playerLineAlpha = 1
-        this.playerLineWidth = 2
-        this.player = new Player(20, 20, -120)
-
-        // player physics
-        this.playerSpeed = 2
-        this.rotationConst = 0.1
-        this.maxTurnAngle = 30
-        
-        this.jumpStrength = 7.75
-        this.gravityConst = 0.2
-        this.yVelocity = 2 // could put in player
-        this.grounded = false
-
         // collectables
         this.collectables = []
 
@@ -135,18 +137,18 @@ class Play extends Phaser.Scene{
 
         //increase difficulty event
         this.time.addEvent({
-            delay: 11000,
+            delay: 11000, // 11000
             loop: true,
             callback: () => {
                 if(!this.crashed){
                     this.speedUp.play()
 
-                    if (this.camera.fov < 142) this.camera.fov += 0.6
-                    if (this.obstacleSpawnChance < 1) this.obstacleSpawnChance += 0.07
+                    if (this.camera.fov < 142) this.camera.fov += 0.3
+                    if (this.obstacleSpawnChance < 1) this.obstacleSpawnChance += 0.04
                     if (this.collectableSpawnChance < 1) this.collectableSpawnChance += 0.05
 
-                    this.playerSpeed += 0.28
-                    console.log(`speed Up fov:${this.camera.fov} | osc: ${this.obstacleSpawnChance} | csc ${this.collectableSpawnChance} |  player speed ${this.playerSpeed}`)
+                    this.playerSpeed += 0.25
+                    if(this.debug) console.log(`speed Up fov:${this.camera.fov} | osc: ${this.obstacleSpawnChance} | csc ${this.collectableSpawnChance} |  player speed ${this.playerSpeed}`)
                 }
             }
         })
@@ -181,9 +183,6 @@ class Play extends Phaser.Scene{
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
         keyLEFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
 
-        keySPACE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-        keySHIFT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT)
-
         keyIncreaseFov = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.O)
         keyDecreaseFov = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P)
     }
@@ -191,24 +190,24 @@ class Play extends Phaser.Scene{
     update() {
         const startTime = performance.now()
         
-        let playerMovementVector = new Phaser.Math.Vector2(0, 0)
+        this.playerMovementVector.set(0,0)
 
     
+        // left right movement and rotation
         if (keyRIGHT.isDown && (!this.crashed)) {
-            playerMovementVector.x += 2
+            this.playerMovementVector.x += 5
             this.rotatePlayer(-this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
         else if (keyLEFT.isDown && (!this.crashed)) {
-            playerMovementVector.x -= 2
+            this.playerMovementVector.x -= 5
             this.rotatePlayer(this.maxTurnAngle)
             this.shipNoise.setVolume(4)
         }
         else{
             this.rotatePlayer(0)
-            this.shipNoise.setVolume(2)
+            this.shipNoise.setVolume(2) // less noise when doing nothing
         }
-        
         
         // jump
         if (this.grounded && (!this.crashed) && this.canJump && Phaser.Input.Keyboard.JustDown(keyUP)) {
@@ -217,19 +216,20 @@ class Play extends Phaser.Scene{
             this.grounded = false
             this.canJump = false
         }
-        if (!this.grounded) this.shipNoise.setVolume(4)
+        if (!this.grounded) this.shipNoise.setVolume(4) // noise when in air
 
-
+        // gravity
         this.applyGravity()
 
+        // friction
         if(this.crashed){
             this.applyCrashFriction()
-            if(this.playerSpeed < 0.01){
+            if(this.playerSpeed < 0.065){
                 this.bgAnimation.anims.stop()
             }
-
-
         }
+
+        // game over check
         if(this.playerSpeed <= 0){
             this.shakeEffect = false
             this.scene.pause('playScene')
@@ -239,12 +239,13 @@ class Play extends Phaser.Scene{
         }
         
         // fov control
-        if (keyIncreaseFov.isDown) {this.camera.fov += 1}
-        if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
+        if (this.debug){
+            if (keyIncreaseFov.isDown) {this.camera.fov += 1}
+            if (keyDecreaseFov.isDown) {this.camera.fov -= 1}
+        }
 
         // camera shake
         this.applyShakeEffect()
-        
 
         // dont let player go too low (floor drawn at 250)
         if(this.player.y > 245) {
@@ -252,9 +253,9 @@ class Play extends Phaser.Scene{
             this.yVelocity = 0
             this.grounded = true
             this.shipNoise.setVolume(2)
-
         }
-        // left righ restriction
+
+        // left right restriction
         if(this.player.x < -500){
             this.player.x = -500
         }else if(this.player.x > 500){
@@ -262,12 +263,13 @@ class Play extends Phaser.Scene{
         }
 
         // forward movememt
-        playerMovementVector.y += this.playerSpeed // the .y is actually z
+        this.playerMovementVector.y += this.playerSpeed // the .y is actually z
 
         // move player on x
-        this.player.x += playerMovementVector.x
-        
-        this.player.z += playerMovementVector.y // forward movement
+        this.player.x += this.playerMovementVector.x
+
+        // forward movement (z)
+        this.player.z += this.playerMovementVector.y
         
         // update player points
         this.player.makePlayer()
@@ -282,6 +284,7 @@ class Play extends Phaser.Scene{
         this.bgAnimation.anims.msPerFrame = 1000/60 * 2 / Math.sqrt(this.playerSpeed)
 
 
+        // screen text
         this.scoreText.text = `Score: ${this.score}`
         this.highScoreText.text = `High: ${highScore}`
         this.canJumpText.text = `Jump: ${this.canJump ? "Charged" : "Empty"}`
@@ -295,75 +298,73 @@ class Play extends Phaser.Scene{
         //////////////////////////////////////////////////////////////////////////////
 
         // generation
-        //barriers
-        if(this.barriers.length < 8){
-            this.barriers.push(new RectPrism(-515, 125, this.player.z + 750, 'barrier'))
-            this.barriers.push(new RectPrism(485, 125, this.player.z + 750, 'barrier'))
-        }
-        // collectables
-        if(this.frame % 10 == 0){
-            if (Math.random() < this.collectableSpawnChance){
-                let pyramidX = 25 * Math.round(this.helpers.gaussianRandom(0, 220) / 25) // round to nearest 25
-                if (pyramidX < -490) pyramidX = -490
-                else if (pyramidX > 465) pyramidX = 465
-                const pyramidZ = this.player.z + 1000
-                let pyramidY = 0
-                let pyramidType = 'none' 
+        if (!this.crashed){
+            // barriers
+            if(this.barriers.length < 8){
+                this.barriers.push(new RectPrism(-515, 125, this.player.z + 750, 'barrier'))
+                this.barriers.push(new RectPrism(485, 125, this.player.z + 750, 'barrier'))
+            }
+            // collectables
+            if(this.frame % 4 == 0){
+                if (Math.random() < this.collectableSpawnChance){
+                    let pyramidX = 25 * Math.round(this.helpers.gaussianRandom(0, 220) / 25) // round to nearest 25
+                    if (pyramidX < -490) pyramidX = -490
+                    else if (pyramidX > 465) pyramidX = 465
+                    const pyramidZ = this.player.z + 1000
+                    let pyramidY = 0
+                    let pyramidType = 'none' 
 
-                if(Math.random() < 0.20){
-                    pyramidType = 'high'
-                    pyramidY = 100
-                }
-                else{
-                    pyramidType = 'normal'
-                    pyramidY = 240
-                }
+                    if(Math.random() < 0.20){
+                        pyramidType = 'high'
+                        pyramidY = 100
+                    }
+                    else{
+                        pyramidType = 'normal'
+                        pyramidY = 240
+                    }
 
-                this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+                    this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
+                }
+            }
+            // obstacles
+            if(this.frame % 2 == 0){
+                if(Math.random() < this.obstacleSpawnChance){
+                    const obyX = (Math.random() - 0.5) * 1000 - 15
+                    // const obyX = this.helpers.gaussianRandom(0, 220)
+                    const obyZ = this.player.z + 1000
+                    let obyY = 0
+                    let obyType = 'none'
+
+                    const rand = Math.random()
+                    if (rand < 0.07){
+                        obyType = 'long wall'
+                        obyY = 220
+                    }
+                    else if (rand < 0.15){
+                        obyType = 'wide wall'
+                        obyY = 220
+                    }
+                    else if(rand < 0.2){
+                        obyType = 'large'
+                        obyY = 200
+                    }
+                    else if(rand < 0.8){
+                        obyType = 'medium'
+                        obyY = 215
+                    }
+                    else{
+                        obyType = 'small'
+                        obyY = 225
+                    }
+
+                    this.obstacles.push(new RectPrism(obyX, obyY, obyZ, obyType))
+                }
             }
         }
-        // obstacles
-        if(this.frame % 10 == 0){
-            if(Math.random() < this.obstacleSpawnChance){
-                const obyX = (Math.random() - 0.5) * 1000 - 15
-                // const obyX = this.helpers.gaussianRandom(0, 220)
-                const obyZ = this.player.z + 1000
-                let obyY = 0
-                let obyType = 'none'
-
-                const rand = Math.random()
-                if (rand < 0.07){
-                    obyType = 'long wall'
-                    obyY = 220
-                }
-                else if (rand < 0.15){
-                    obyType = 'wide wall'
-                    obyY = 220
-                }
-                else if(rand < 0.2){
-                    obyType = 'large'
-                    obyY = 200
-                }
-                else if(rand < 0.8){
-                    obyType = 'medium'
-                    obyY = 215
-                }
-                else{
-                    obyType = 'small'
-                    obyY = 225
-                }
-
-                this.obstacles.push(new RectPrism(obyX, obyY, obyZ, obyType))
-            }
-        }
-
-
-
         //////////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////
 
-
-        // small paralax effect
+        // small paralax effect for bgAnim
         this.bgAnimation.x = this.bgCenter[0] - this.camera.x * this.bgParalax
         this.bgAnimation.y = this.bgCenter[1] - this.camera.y * this.bgParalax
 
@@ -371,62 +372,68 @@ class Play extends Phaser.Scene{
         this.blackCircle.x = this.bgAnimation.x
         this.blackCircle.y = this.bgAnimation.y
 
-        // clear
+        // clear lines
         this.graphics.clear()
 
-        // darken
-        const trailLengthConst = 0.19 // alpha multiplier
+        // blur effect by darkening
+        const trailLengthConst = 0.3 // alpha multiplier
         if(this.trailBlurEffect) this.trailTexture.fill(0x000000, trailLengthConst)
 
-        //obja and player
+        //objects and player abd floor
         this.draw()
 
-        //stamp
+        //stamp onto texture
         if (this.trailBlurEffect) this.trailTexture.draw(this.graphics)
-
 
         // for debug
         const endTime = performance.now()
         const duration = endTime - startTime
 
         this.frame += 1
-        if (this.debug && this.frame % (10) == 0){
-            console.log(`Score: ${this.score} | Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
-            if (this.frame >= this.fps) this.frame = 0 // reset
+        if (this.debug){
+            if (this.frame % (10) == 0 || duration > 8){
+                console.log(`Score: ${this.score} | Lines drawn: ${this.linesDrawn} | Update loop took: ${duration.toFixed(2)} ms`)
+                if(duration > 8) console.log("FRAME RATE WARNING; FRAME TOOK > 8 MS")
+                if (this.frame >= this.fps) this.frame = 0 // reset
+            }
         }
     }
 
     draw() {
         this.linesDrawn = 0
 
+        /*https://4geeks.com/how-to/javascript-array-clear*/
+        this.objectsToDraw.length = 0
+
+        this.objectsToDraw.push(...this.collectables, ...this.obstacles, ...this.barriers)
+
+        // sort in increasing order to draw in perspective
+        /*https://stackoverflow.com/questions/1063007/how-to-sort-an-array-of-integers */
+        this.objectsToDraw.sort(function(a, b) {
+            return (a.z + a.sizeZ/2) - (b.z + b.sizeZ/2);
+        })
+        
         // floor
         this.drawFloor()
 
         // draw objects
-        let seen = new Set()
+        this.seen.clear()
 
-        let objectsToDraw = [...this.collectables, ...this.obstacles, ...this.barriers]
-        
-        // sort in increasing order to draw in perspective
-        /*https://stackoverflow.com/questions/1063007/how-to-sort-an-array-of-integers */
-        objectsToDraw.sort(function(a, b) {
-            return (a.z + a.sizeZ/2) - (b.z + b.sizeZ/2);
-        })
 
         //collectables
-        while (objectsToDraw.length){
+        while (this.objectsToDraw.length){
             // choose point
-            const object = objectsToDraw.pop()
+            const object = this.objectsToDraw.pop()
 
             for (const point of object.points){
                 //draw line connections
                 for(const conn of point.connections){
-                    if (!seen.has(conn)){
+                    if (!this.seen.has(conn)){
                         // both objects need the same variable names of color, alpha, relativeWidth
                         this.draw3DLine(point.x, point.y, point.z, conn.x, conn.y, conn.z, object.color, object.alpha, this.widthConstant * object.relativeWidth)
                     }
                 }
-                seen.add(point)
+                this.seen.add(point)
             }
         }
 
@@ -445,6 +452,7 @@ class Play extends Phaser.Scene{
             //check if behind player
             if (cz < (this.player.z - 100)){
                 this.collectables.splice(i, 1) // delete
+                i -= 1
                 continue
             }
             // check all dimensions is order of relevance
@@ -467,12 +475,13 @@ class Play extends Phaser.Scene{
 
                         this.canJump = true
                         this.collectables.splice(i, 1) // delete
+                        i--
                     }
                 }
             }
         }
 
-        //obstacles
+        //obstaclesx
         if (!this.crashed){
             for (let i = 0; i < this.obstacles.length; i++){
                 if(this.obstacles[i].points.length === 0) continue
@@ -482,6 +491,7 @@ class Play extends Phaser.Scene{
                 //check if behind player
                 if (cz < (this.player.z - 300)){
                     this.obstacles.splice(i, 1) // delete
+                    i--
                     continue
                 }
                 // check all dimensions is order of relevance
@@ -497,7 +507,8 @@ class Play extends Phaser.Scene{
                             this.playerColor = 0xcc0000
                             this.playerAlpha = 0.3
                             this.playerLineColor = 0xff0000
-                            console.log("CRASHED")
+
+                            if(this.debug) console.log("CRASHED")
                         }
                     }
                 }
@@ -514,6 +525,7 @@ class Play extends Phaser.Scene{
                 //check if behind player
                 if (cz < (this.player.z - 250)){
                     this.barriers.splice(i, 1) // delete
+                    i--
                     continue
                 }
                 // check all dimensions is order of relevance
@@ -529,7 +541,7 @@ class Play extends Phaser.Scene{
                             this.playerColor = 0xcc0000
                             this.playerAlpha = 0.3
                             this.playerLineColor = 0xff0000
-                            console.log("CRASHED")
+                            if(this.debug) console.log("CRASHED")
                         }
                     }
                 }
@@ -702,7 +714,7 @@ class Play extends Phaser.Scene{
     // shakes the camera like when an explosion happens maybe
     applyShakeEffect(){
         if (this.shakeEffect){
-            if ((this.frame) % 2 == 0){
+            if ((this.frame) % 1 == 0){
                 const shakeMagnitude = 3
                 this.camera.x += Math.random() * shakeMagnitude - shakeMagnitude/2
                 this.camera.y += Math.random() * shakeMagnitude - shakeMagnitude/2
@@ -716,13 +728,13 @@ class Play extends Phaser.Scene{
         this.yVelocity += this.gravityConst
 
         // custom jump physics
-        if (this.yVelocity > 2 ){
+        if (this.yVelocity > -7){
             this.yVelocity += this.gravityConst * 0.7
         }
 
         // terminal velocity
-        if (this.yVelocity > 16){
-            this.yVelocity = 16
+        if (this.yVelocity > 32){
+            this.yVelocity = 32
         }
 
         this.player.y += this.yVelocity
@@ -731,11 +743,11 @@ class Play extends Phaser.Scene{
     applyCrashFriction(){
         if(this.playerSpeed <= 0) return
 
-        if (this.playerSpeed < 0.5){
-            this.playerSpeed -= 0.02
+        if (this.playerSpeed < 1.25){
+            this.playerSpeed -= 0.06
         }
         else{
-            this.playerSpeed *= 0.99
+            this.playerSpeed *= 0.97
         }
     }
 }
