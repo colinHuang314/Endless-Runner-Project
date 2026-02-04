@@ -32,7 +32,7 @@ class Play extends Phaser.Scene{
 
             
         // camera
-        this.camera = new Camera(20, -200, -500, 140)
+        this.camera = new Camera(20, -200, -2500, 140)
         //camera physics
         this.followConst = 0.25
 

@@ -49,9 +49,13 @@ class Menu extends Phaser.Scene{
         menuConfig.backgroundColor = '#00FF00'
         menuConfig.color = '#000'
         this.add.text(game.config.width/2, game.config.height/2 + 80, 'Press → to start', menuConfig).setOrigin(0.5)
+        menuConfig.backgroundColor = '#0004e3'
+        menuConfig.color = '#e3e3e3'
+        this.add.text(game.config.width/2, game.config.height - 50, 'Press ↓ for credits', menuConfig).setOrigin(0.5)
     
         // keys
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
+        keyDOWN = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
     
         //audio
         this.selectSound = this.sound.add('selectSound', {volume: 0.25})
@@ -62,6 +66,9 @@ class Menu extends Phaser.Scene{
         if (Phaser.Input.Keyboard.JustDown(keyRIGHT)) {
             this.selectSound.play()            
             this.scene.start('playScene')    
+        }else if (Phaser.Input.Keyboard.JustDown(keyDOWN)) {
+            this.selectSound.play()            
+            this.scene.start('creditsScene')    
         }
     }
 

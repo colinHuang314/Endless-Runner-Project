@@ -26,12 +26,14 @@ Time Tracked (total: ):
     - deleted objects that pass behind the player for optimization (5 min)
     - refactoring, player jump, load screen (45 min)
     - made player 3d (30 min)
-    ---------- 12 hr mark 1/28/2026 -------------
+    ---------- 12 hr mark 01/28/2026 -------------
     - added helper class, added pyramid class added random generation, refactored drawing loop, refactored collision (90 min)
     - added crash sound and gameover scene (60 min)
     - added jump and select sounds, changed some text display, refactored the drawing loop (45 min)
     - added barriers so the player cant move left or right forever, made game get harder as game goes on, made mechanic where you need to collect an item to charge your jump (80 min)
-    - fixed input lag issue by changing fps to 24 and changed constants accordingly. did other small tweaks and testing
+    - fixed input lag issue by changing fps to 24 and changed constants accordingly. did other small tweaks and testing (60 min)
+    - added credits scene (30 min)
+    ----------- 18 hr mark 02/04/2026 ------------
     
 */
 
@@ -45,7 +47,7 @@ config = {
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [ Load, Menu, Play, GameOver],
+    scene: [ Load, Menu, Credits, Play, GameOver],
     fps: {
         target: 24, // had to reduce because I had some lag at 60 fps 
         forceSetTimeOut: true // enforce the fps
@@ -102,8 +104,8 @@ Be theoretically endless (1)
 Be playable for at least 15 seconds for a new player of low to moderate skill (1)
     DONE
 Run without significant crashes or errors (1)
-    to-do
+    DONE
 Include in-game credits for all roles, assets, music, etc. (1)
-    to-do
+    DONE
 
 */
