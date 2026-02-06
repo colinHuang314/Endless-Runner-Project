@@ -73,8 +73,6 @@ ran into problem with input lag all of a sudden.
     when holdnig a key down, it would lag the game, even though update loop stayed fast at 1-2 ms per frame
     i lowered frame rate to 24 from 60 and now phaser can handle it when you hold down buttons (at about 1-2 ms per frame still)
 
-break animations: objects break into lines or polygons upon collision
-
 
 
 Use multiple Scene classes (dictated by your game's style) (1)

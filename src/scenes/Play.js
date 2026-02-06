@@ -5,14 +5,14 @@ class Play extends Phaser.Scene{
     
     init(){
         this.helpers = new Helpers()
-        this.debug = true
+        this.debug = false
 
         this.frame = 1 // for debuging for now
         this.linesDrawn = 0
 
         // game
         this.score = 0
-        this.obstacleSpawnChance = 0.05
+        this.obstacleSpawnChance = 0.06
         this.collectableSpawnChance = 0.33
         this.canJump = true
 
@@ -27,7 +27,7 @@ class Play extends Phaser.Scene{
 
         // render consts
         this.widthConstant = 1600
-        this.minWidth = 0.4  // acts like render distance too
+        this.minWidth = 0.5  // acts like render distance too
         this.maxWidth = 50   //makes close objects transparent
 
             
@@ -137,7 +137,7 @@ class Play extends Phaser.Scene{
 
         //increase difficulty event
         this.time.addEvent({
-            delay: 11000, // 11000
+            delay: 10000, // 11000
             loop: true,
             callback: () => {
                 if(!this.crashed){
@@ -281,7 +281,7 @@ class Play extends Phaser.Scene{
         this.checkCollision()
 
         // change animation speed
-        this.bgAnimation.anims.msPerFrame = 1000/60 * 2 / Math.sqrt(this.playerSpeed)
+        this.bgAnimation.anims.msPerFrame = 1000/60 * 4 / Math.sqrt(this.playerSpeed)
 
 
         // screen text
