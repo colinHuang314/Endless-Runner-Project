@@ -109,6 +109,7 @@ class Play extends Phaser.Scene{
 
         // cover middle of animation with black
         this.blackCircle = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
+        // this.blackCircle = this.add.circle(this.bgCenter[0], this.bgCenter[1], 600, 0x000000)
 
 
         // add graphics after background
@@ -127,13 +128,43 @@ class Play extends Phaser.Scene{
 
         // generate the first batch
         for (let i = 4; i < 20; i ++){
-            const pyramidX = this.helpers.gaussianRandom(0, 220)
+            let pyramidX = this.helpers.gaussianRandom(0, 220)
+            if (pyramidX < -490) pyramidX = -490
+            else if (pyramidX > 465) pyramidX = 465
+
             const pyramidZ = this.player.z + i * 50
             let pyramidType = 'normal'
             let pyramidY = 240
             
             this.collectables.push(new Pyramid(pyramidX, pyramidY, pyramidZ, pyramidType))
         }
+
+        // barriers
+        this.obstacles = []
+        this.barriers = []
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 250, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 250, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 500, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 500, 'barrier'))
+        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 750, 'barrier'))
+        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 750, 'barrier'))
+
+        // obstacles
+
+        // first batch
+        for (let i = 2; i < 5; i ++){
+            // const obstacleX = this.helpers.gaussianRandom(0, 220)
+            const obstacleX = (Math.random() - 0.5) * 1000 - 15
+
+            const obstacleZ = this.player.z + i * 200
+            let obstacleType = 'medium'
+            let obstacleY = 215
+            
+            this.obstacles.push(new RectPrism(obstacleX, obstacleY, obstacleZ, obstacleType))
+        }
+
 
         //increase difficulty event
         this.time.addEvent({
@@ -152,29 +183,6 @@ class Play extends Phaser.Scene{
                 }
             }
         })
-
-
-        // obstacles
-        this.obstacles = []
-        this.barriers = []
-        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200, 'barrier'))
-        this.barriers.push(new RectPrism(485, 125, this.player.z + 200, 'barrier'))
-        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 250, 'barrier'))
-        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 250, 'barrier'))
-        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 500, 'barrier'))
-        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 500, 'barrier'))
-        this.barriers.push(new RectPrism(-515, 125, this.player.z + 200 + 750, 'barrier'))
-        this.barriers.push(new RectPrism(485, 125, this.player.z + 200 + 750, 'barrier'))
-
-        // first batch
-        for (let i = 2; i < 5; i ++){
-            const obstacleX = this.helpers.gaussianRandom(0, 220)
-            const obstacleZ = this.player.z + i * 200
-            let obstacleType = 'medium'
-            let obstacleY = 215
-            
-            this.obstacles.push(new RectPrism(obstacleX, obstacleY, obstacleZ, obstacleType))
-        }
         
         // make keys
         keyUP = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
@@ -437,6 +445,10 @@ class Play extends Phaser.Scene{
             }
         }
 
+        // fill screen with black for testing
+        this.graphics.fillStyle(0x000000, 1)
+        // this.graphics.fillRect(0, 0, 800, 600)
+        
         // draw player
         this.drawPlayer()
     }

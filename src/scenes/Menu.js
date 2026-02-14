@@ -24,12 +24,57 @@ class Menu extends Phaser.Scene{
         // cover middle of animation with black
         this.blackOverlay = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
 
-        let menuConfig = {
-            fontFamily: 'Courier',
+        // draw player
+        this.player = this.add.sprite(400, 360, 'player')
+        this.player.setScale(0.8)
+
+        // text configs
+        let titleConfig = {
+            fontFamily: 'Verdana',
+            fontSize: '80px',
+            color: '#FF00FF',
+            align: 'center',
+            stroke: '#ffffff',
+            strokeThickness: 4,
+            shadow: {
+                offsetX: 0,
+                offsetY: 0,
+                color: '#FF00FF',
+                blur: 15,
+                stroke: true,
+                fill: true
+            },
+            padding: {
+                top: 10,
+                bottom: 10,
+            },
+        }
+
+        let intructionsConfig = {
+            fontFamily: 'Verdana',
             fontSize: '28px',
-            fontStyle: 'bold',
-            backgroundColor: '#F3B141',
-            color: '#843605',
+            color: '#0000EE',
+            align: 'center',
+            stroke: '#0000E0',
+            strokeThickness: 1.5,
+            shadow: {
+                offsetX: 0,
+                offsetY: 0,
+                color: '#2222E0',
+                blur: 15,
+                stroke: true,
+                fill: true
+            },
+            padding: {
+                top: 10,
+                bottom: 10,
+            },
+        }
+        let startConfig = {
+            fontFamily: 'Verdana',
+            fontSize: '40px',
+            backgroundColor: '#000000',
+            color: '#00FF00',
             align: 'right',
             padding: {
                 top: 5,
@@ -37,21 +82,33 @@ class Menu extends Phaser.Scene{
             },
             fixedWidth: 0
         }
+
         // display menu text
-        menuConfig.fontSize = '80px'
-        this.add.text(game.config.width/2, 128, 'Galaxy Cruiser', menuConfig).setOrigin(0.5)
-        menuConfig.fontSize = '25px'
-        this.add.text(game.config.width/2, game.config.height/2 - 40, 'Use ←→ arrows to move and ↑ to Jump', menuConfig).setOrigin(0.5)
-        menuConfig.backgroundColor = '#ff47a6'
-        this.add.text(game.config.width/2, game.config.height/2 + 0, 'Collect Pyramids for points and to charge your Jump', menuConfig).setOrigin(0.5)
-        menuConfig.backgroundColor = '#FF0000'
-        this.add.text(game.config.width/2, game.config.height/2 + 40, 'Dont hit the Red Cubes!', menuConfig).setOrigin(0.5)
-        menuConfig.backgroundColor = '#00FF00'
-        menuConfig.color = '#000'
-        this.add.text(game.config.width/2, game.config.height/2 + 80, 'Press → to start', menuConfig).setOrigin(0.5)
-        menuConfig.backgroundColor = '#0004e3'
-        menuConfig.color = '#e3e3e3'
-        this.add.text(game.config.width/2, game.config.height - 50, 'Press ↓ for credits', menuConfig).setOrigin(0.5)
+        // title
+        this.add.text(game.config.width/2, 60, 'Galaxy Cruiser', titleConfig).setOrigin(0.5)
+
+        // movement
+        this.add.text(game.config.width/2, 160, 'Use ←→ arrows to move and ↑ arrow to Jump', intructionsConfig).setOrigin(0.5)
+
+        // collectables
+        intructionsConfig.color = '#FF9900'
+        intructionsConfig.shadow.color = '#FF9900'
+        intructionsConfig.stroke = '#FF9900'
+        this.add.text(game.config.width/2, 200, 'Collect Pyramids for points and to charge your Jump', intructionsConfig).setOrigin(0.5)
+
+        // obstacles
+        intructionsConfig.color = '#FF0000'
+        intructionsConfig.shadow.color = '#FF0000'
+        intructionsConfig.stroke = '#FF0000'
+        this.add.text(game.config.width/2, 240, 'Dont hit the Red Cubes!', intructionsConfig).setOrigin(0.5)
+
+        // start
+        this.add.text(game.config.width/2, game.config.height/2 + 180, 'Press → to start', startConfig).setOrigin(0.5)
+
+        // credits
+        startConfig.fontSize = '28px'
+        startConfig.color = '#FFFF00'
+        this.add.text(game.config.width/2, game.config.height - 30, 'Press ↓ for credits', startConfig).setOrigin(0.5)
     
         // keys
         keyRIGHT = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
@@ -64,11 +121,11 @@ class Menu extends Phaser.Scene{
 
     update() {
         if (Phaser.Input.Keyboard.JustDown(keyRIGHT)) {
-            this.selectSound.play()            
-            this.scene.start('playScene')    
+            this.selectSound.play()
+            this.scene.start('playScene')
         }else if (Phaser.Input.Keyboard.JustDown(keyDOWN)) {
-            this.selectSound.play()            
-            this.scene.start('creditsScene')    
+            this.selectSound.play()
+            this.scene.start('creditsScene')
         }
     }
 

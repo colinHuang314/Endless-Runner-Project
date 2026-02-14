@@ -31,6 +31,9 @@ class Load extends Phaser.Scene {
             frameWidth: 800,
             frameHeight: 600
         })
+
+        // load player
+        this.load.image('player', './assets/playerSprite.png')
     }
 
     create() {

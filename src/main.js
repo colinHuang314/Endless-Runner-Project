@@ -7,7 +7,12 @@ Creative Tilt:
     Technical aspect: I made my own 3d renderer for simple lines in 3d space and a camera that follows the player. (doesn't support camera rotation and sometimes intersecting lines makes object lines drawn in wrong order)
     Visual style: I made my own sound track and also chose a cool neon lines style with motion blur
 
-Time Tracked (total: ):
+OTHER NOTES:
+    My player is drawn with Phaser graphics so I did a spritesheet animation for the background.
+    The player is still animated but by other means
+    
+
+Time Tracked (total: 19 hrs):
     - basic 3d renderer (150 min)
     - drawing player and aligning with camera (60 min)
     - refactoring player (30 min)
@@ -34,6 +39,8 @@ Time Tracked (total: ):
     - fixed input lag issue by changing fps to 24 and changed constants accordingly. did other small tweaks and testing (60 min)
     - added credits scene (30 min)
     ----------- 18 hr mark 02/04/2026 ------------
+    - playtesting and tweaking constants. getting ready for submission (20 min)
+    - made menu look better (60 min)
     
 */
 
@@ -73,6 +80,7 @@ ran into problem with input lag all of a sudden.
     when holdnig a key down, it would lag the game, even though update loop stayed fast at 1-2 ms per frame
     i lowered frame rate to 24 from 60 and now phaser can handle it when you hold down buttons (at about 1-2 ms per frame still)
 
+bug if you spam right arrow as game loads
 
 
 Use multiple Scene classes (dictated by your game's style) (1)
