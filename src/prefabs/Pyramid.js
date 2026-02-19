@@ -12,7 +12,7 @@ class Pyramid{
             this.sizeX = 20
             this.sizeY = 20
             this.sizeZ = 20
-            this.color = 0xfcf003
+            this.color = 0xfcff03
             this.alpha = 1
             this.relativeWidth = 1
         }
@@ -21,9 +21,9 @@ class Pyramid{
             this.sizeX = 25
             this.sizeY = 25
             this.sizeZ = 25
-            this.color = 0xff9900 // 0xff47a6
+            this.color = 0xffb900 // 0xff47a6
             this.alpha = 1
-            this.relativeWidth = 1
+            this.relativeWidth = 1.4
         }
 
         // points

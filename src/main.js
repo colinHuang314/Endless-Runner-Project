@@ -41,7 +41,7 @@ Time Tracked (total: 20 hrs):
     ----------- 18 hr mark 02/04/2026 ------------
     - playtesting and tweaking constants. getting ready for submission (20 min)
     - made menu look better (60 min)
-    - final touches and testing (60 min)
+    - final touches and testing, changed game feel based on friends' playtesting (60 min)
     
 */
 
@@ -50,7 +50,7 @@ config = {
     width: 800,
     height: 600,
     render: { // https://tessl.io/registry/tessl/npm-phaser/3.90.0/files/docs/rendering.md
-        antialias: true,         // Enable anti-aliasing
+        antialias: true,         // Enable anti-aliasing (might help a little)
     },
     scale: {
         autoCenter: Phaser.Scale.CENTER_BOTH,

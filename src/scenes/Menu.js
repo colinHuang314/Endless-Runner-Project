@@ -25,7 +25,7 @@ class Menu extends Phaser.Scene{
         this.blackOverlay = this.add.circle(this.bgCenter[0], this.bgCenter[1], 60, 0x000000)
 
         // draw player
-        this.player = this.add.sprite(400, 360, 'player')
+        this.player = this.add.sprite(400, 400, 'player')
         this.player.setScale(0.8)
 
         // text configs
@@ -88,22 +88,30 @@ class Menu extends Phaser.Scene{
         this.add.text(game.config.width/2, 60, 'Galaxy Cruiser', titleConfig).setOrigin(0.5)
 
         // movement
-        this.add.text(game.config.width/2, 160, 'Use ←→ arrows to move and ↑ arrow to Jump', intructionsConfig).setOrigin(0.5)
+        this.add.text(game.config.width/2, 160, 'Use ←→ arrows to move and ↑ arrow to Jump.', intructionsConfig).setOrigin(0.5)
 
         // collectables
         intructionsConfig.color = '#FF9900'
         intructionsConfig.shadow.color = '#FF9900'
         intructionsConfig.stroke = '#FF9900'
-        this.add.text(game.config.width/2, 200, 'Collect Pyramids for points and to charge your Jump', intructionsConfig).setOrigin(0.5)
+        this.add.text(game.config.width/2, 200, 'Earn points by collecting pyramids.', intructionsConfig).setOrigin(0.5)
+        
+        // jump charging
+        intructionsConfig.color = '#dd00ff'
+        intructionsConfig.shadow.color = '#dd00ff'
+        intructionsConfig.stroke = '#dd00ff'
+        intructionsConfig.fontSize = '22px'
+        this.add.text(game.config.width/2, 240, 'You can only jump once at a time. Collect a pyramid to jump again.', intructionsConfig).setOrigin(0.5)
 
         // obstacles
         intructionsConfig.color = '#FF0000'
         intructionsConfig.shadow.color = '#FF0000'
         intructionsConfig.stroke = '#FF0000'
-        this.add.text(game.config.width/2, 240, 'Dont hit the Red Cubes!', intructionsConfig).setOrigin(0.5)
+        intructionsConfig.fontSize = '28px'
+        this.add.text(game.config.width/2, 280, 'Dont hit the Red Cubes!', intructionsConfig).setOrigin(0.5)
 
         // start
-        this.add.text(game.config.width/2, game.config.height/2 + 180, 'Press → to start', startConfig).setOrigin(0.5)
+        this.add.text(game.config.width/2, game.config.height/2 + 210, 'Press → to start', startConfig).setOrigin(0.5)
 
         // credits
         startConfig.fontSize = '28px'

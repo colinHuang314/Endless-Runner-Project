@@ -83,14 +83,14 @@ class Play extends Phaser.Scene{
 
         // audio
         this.music = this.sound.add('music', { 
-            volume: 0.4,
+            volume: 0.6,
             loop: true 
         })
         this.shipNoise = this.sound.add('shipNoise', {
             volume: 2,
             loop: true
         })
-        this.collect1 = this.sound.add('collect1', {volume: 1})
+        this.collect1 = this.sound.add('collect1', {volume: 0.8})
         this.collect2 = this.sound.add('collect2', {volume: 1})
         this.crash = this.sound.add('crash', {volume: 1})
         this.jump = this.sound.add('jumpSound', {volume: 1})
@@ -168,7 +168,7 @@ class Play extends Phaser.Scene{
 
         //increase difficulty event
         this.time.addEvent({
-            delay: 10000, // 11000
+            delay: 9500, // 11000
             loop: true,
             callback: () => {
                 if(!this.crashed){
@@ -471,7 +471,7 @@ class Play extends Phaser.Scene{
             // uses magic numbers for player hitbox
             if (this.player.z + 10 > cz && this.player.z - 8 < cz + sizeZ){
                 if (this.player.x + 10 > cx && this.player.x - 10 < cx + sizeX){
-                    if (this.player.y + 2 > cy && this.player.y - 2 < cy + sizeY){
+                    if (this.player.y + 2 > cy - sizeY && this.player.y - 2 < cy + sizeY/2){
                         if (this.collectables[i].type === 'high'){
                             this.collect2.play() // sfx
                         }
