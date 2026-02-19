@@ -12,7 +12,7 @@ OTHER NOTES:
     The player is still animated but by other means
     
 
-Time Tracked (total: 19 hrs):
+Time Tracked (total: 20 hrs):
     - basic 3d renderer (150 min)
     - drawing player and aligning with camera (60 min)
     - refactoring player (30 min)
@@ -41,6 +41,7 @@ Time Tracked (total: 19 hrs):
     ----------- 18 hr mark 02/04/2026 ------------
     - playtesting and tweaking constants. getting ready for submission (20 min)
     - made menu look better (60 min)
+    - final touches and testing (60 min)
     
 */
 

@@ -7,10 +7,30 @@ class Credits extends Phaser.Scene{
     }
     
     create() {
-        this.creditsTitleText = this.add.text(400, 50, 'Credits', { fontSize: '85px' }).setOrigin(0.5)
+        let titleConfig = {
+            fontFamily: 'Verdana',
+            fontSize: '80px',
+            color: '#FF00FF',
+            align: 'center',
+            stroke: '#ffffff',
+            strokeThickness: 4,
+            shadow: {
+                offsetX: 0,
+                offsetY: 0,
+                color: '#FF00FF',
+                blur: 15,
+                stroke: true,
+                fill: true
+            },
+            padding: {
+                top: 10,
+                bottom: 10,
+            },
+        }
+        this.creditsTitleText = this.add.text(400, 54, 'Credits', titleConfig).setOrigin(0.5)
         this.optionsText = this.add.text(400, 550, 'Press ← to go back to menu', { fontSize: '30px' }).setOrigin(0.5)
 
-        this.creditsText= this.add.text(60, 800, '\nMusic made in Bandlab\n\nSound effects made with JFXR\n\nUsed ImageMagick to make background animation spritesheet\n\nUsed resources from youtube, stackoverflow, \n\n\t\t4geeks, Prof. Altice, and phaser, *all cited in code*\n', { fontSize: '20px', backgroundColor: '#5b739f'})
+        this.creditsText= this.add.text(60, 800, '\nMusic made in Bandlab\n\nSound effects made with JFXR\n\nUsed ImageMagick to make background animation spritesheet\n\nUsed resources from youtube, stackoverflow, \n\n\t\t4geeks *all cited in code* (also used Prof. Altice\n\n\t\t and phaser non-cited)\n', { fontSize: '20px', backgroundColor: '#5b739f'})
 
         this.creditsTitleText.setScale(0.01)
 

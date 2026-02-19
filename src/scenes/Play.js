@@ -83,7 +83,7 @@ class Play extends Phaser.Scene{
 
         // audio
         this.music = this.sound.add('music', { 
-            volume: 0.3,
+            volume: 0.4,
             loop: true 
         })
         this.shipNoise = this.sound.add('shipNoise', {
@@ -205,12 +205,12 @@ class Play extends Phaser.Scene{
         if (keyRIGHT.isDown && (!this.crashed)) {
             this.playerMovementVector.x += 5
             this.rotatePlayer(-this.maxTurnAngle)
-            this.shipNoise.setVolume(4)
+            this.shipNoise.setVolume(3.5)
         }
         else if (keyLEFT.isDown && (!this.crashed)) {
             this.playerMovementVector.x -= 5
             this.rotatePlayer(this.maxTurnAngle)
-            this.shipNoise.setVolume(4)
+            this.shipNoise.setVolume(3.5)
         }
         else{
             this.rotatePlayer(0)
@@ -224,7 +224,7 @@ class Play extends Phaser.Scene{
             this.grounded = false
             this.canJump = false
         }
-        if (!this.grounded) this.shipNoise.setVolume(4) // noise when in air
+        if (!this.grounded) this.shipNoise.setVolume(3.5) // noise when in air
 
         // gravity
         this.applyGravity()
