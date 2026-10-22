@@ -14,7 +14,7 @@ An endless runner in 3D, built in Phaser 3 with my own 3D line renderer. Steer a
 - **Neon look.** The lines are drawn onto a render texture that is darkened a little each frame instead of cleared, which leaves motion-blur trails, plus a slight jitter effect.
 - **Difficulty ramp.** Over time the ship speeds up, obstacles and pickups spawn more often, and the camera's field of view widens to sell the speed.
 - **Background.** A starfield animation rendered in Blender, exported as frames, packed into a spritesheet with ImageMagick, and shifted slightly with the ship for a parallax effect.
-- **Audio.** The 1:53 soundtrack is my own (made in BandLab); sound effects made with jfxr plus a few from freesound.org.
+- **Audio.** All original: a 1:53 soundtrack made in BandLab and sound effects I made with jfxr and freesound.org.
 
 ## Code
 | File | What |
